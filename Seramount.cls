@@ -19,7 +19,8 @@ Map<String, Decimal> mapOfProgramAndNBBAmount = new Map<String, Decimal>();
 Map<String, Decimal> mapOfProgramAndAdminTravelFee = new Map<String, Decimal>();
 Map<String, String> mapOfProgramAndParentProductName = new Map<String, String>();
 Set<String> setOfRenewablePrograms_Seramount = new Set<String>{'EDBP','EDLC', 'EDATS', 'EDSPO','EDSLS', 'EDLRS', 'EDHR'};
-Set<String> setOfOneTimePrograms_Seramount = new Set<String>{'EDEV','EDCON', 'EDLRN', 'EDRS'};
+// Set<String> setOfOneTimePrograms_Seramount = new Set<String>{'EDEV','EDCON', 'EDLRN', 'EDRS' };
+Set<String> setOfOneTimePrograms_Seramount = new Set<String>{'EDCON', 'EDLRN', 'EDRS', 'EDEV - EmERGe','EDEV - Global Emerge','EDEV - Lead with Ambition','EDEV - Work Beyond Summit and Gala Awards','EDEV - All Paid Events Ticket Package'};
 Set<String> setOfEvents_Seramount = new Set<String>{
     'SMT-EmERGe',
     'SMT-Glb_Emerge',
@@ -185,10 +186,9 @@ for(String program : setOfProgramsAcronyms){
     if(tipsContract){
         nbbAmount = nbbAmount * 0.99;
     }
-    
     mapOfProgramAndNBBAmount.put(program, nbbAmount.setScale(2));
     if(nbbAmount == 0){
-        // continue;
+        continue;
     }
     System.debug('Program => ' + program);
     System.debug('Start Date = ' + mapOfProgramStartDate.get(program));
@@ -203,20 +203,16 @@ for(String program : setOfProgramsAcronyms){
             System.debug('Binder Date: Date of the Event');
             System.debug('ATL Date: Date of the Event');
             System.debug('Get the date of the event from -> ' + seramountEvents);
-        
         }
         System.debug('NBB Type: Un-Posted Risk');
         Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
         System.debug('Binder Date: '  + atlBinderDate);
         System.debug('ATL Date: ' + atlBinderDate);
-        
     } else{
         System.debug('NBB Type: Base Fee');
-        
         Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
         System.debug('Binder Date: '  + atlBinderDate);
         System.debug('ATL Date: ' + atlBinderDate);
-
     }
     if(creditingOpp.Commercial_Team__c == 'Seramount RET'){
         System.debug('Deal Type: Cross Sell');
