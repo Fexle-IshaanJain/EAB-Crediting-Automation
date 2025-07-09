@@ -1,4 +1,4 @@
-ID OppId = '006Pr00000Ebm5dIAB'; 
+ID OppId = '';
 Boolean tipsContract = false;
 Opportunity creditingOpp = [SELECT ID,Owner.Name, Commercial_Team__c, StageName, LOA_Contract__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Secondary_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c
 FROM Opportunity
@@ -35,8 +35,6 @@ Map<String, String> mapOfSeperateEvents = new Map<String, String>{
     'SMT-Wrk_Gala_Awd' => 'EDEV - Work Beyond Summit and Gala Awards',
     'SMT-Events_Sampler' => 'EDEV - All Paid Events Ticket Package'
 };
-
-
 Boolean oneTimeProgramPresentOf_Seramount = false;
 Boolean renewableProgramPresent_Seramount = false;
 Boolean isOppSendToFinance = creditingOpp.StageName == sendToFinance;
@@ -50,11 +48,11 @@ Set<String> setOfProgramsAcronyms = new Set<String>();
 Set<String> setOfProductCode = new Set<String>();
 List<SBQQ__QuoteLine__c> listOfQLs = new List<SBQQ__QuoteLine__c>();
 if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c == null || creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c == 'Funds Appropriation Opt Out'){
-    listOfQLs = [SELECT ID, Product_Code_Combination__c, Related_Product_with_Parent_Product__c, Related_Product_with_Parent_Product_Name__c, Previous_Year_Quantity__c, SBQQ__ProductName__c, Related_Product__c, SBQQ__StartDate__c, SBQQ__EndDate__c, SBQQ__CustomerTotal__c, SBQQ__Product__c, SBQQ__ProductCode__c, SBQQ__Product__r.Family, SBQQ__Product__r.Program__c, SBQQ__Product__r.Program__r.Program_Acronym__c, SBQQ__Product__r.Program__r.Name FROM SBQQ__QuoteLine__c   
+    listOfQLs = [SELECT ID, Product_Code_Combination__c, Related_Product_with_Parent_Product__c, Related_Product_with_Parent_Product_Name__c, Previous_Year_Quantity__c, SBQQ__ProductName__c, Related_Product__c, SBQQ__StartDate__c, SBQQ__EndDate__c, SBQQ__CustomerTotal__c, SBQQ__Product__c, SBQQ__ProductCode__c, SBQQ__Product__r.Family, SBQQ__Product__r.Program__c, SBQQ__Product__r.Program__r.Program_Acronym__c, SBQQ__Product__r.Program__r.Name FROM SBQQ__QuoteLine__c
     WHERE SBQQ__Quote__c = :creditingOpp.SBQQ__PrimaryQuote__c
     ORDER BY SBQQ__CustomerTotal__c ASC ];
 } else {
-    listOfQLs = [SELECT ID, Previous_Year_Quantity__c, SBQQ__ProductName__c, Related_Product__c, SBQQ__StartDate__c, SBQQ__EndDate__c, SBQQ__CustomerTotal__c, SBQQ__Product__c, SBQQ__ProductCode__c, SBQQ__Product__r.Family, SBQQ__Product__r.Program__c, SBQQ__Product__r.Program__r.Program_Acronym__c, SBQQ__Product__r.Program__r.Name FROM SBQQ__QuoteLine__c   
+    listOfQLs = [SELECT ID, Product_Code_Combination__c, Related_Product_with_Parent_Product__c, Related_Product_with_Parent_Product_Name__c, Previous_Year_Quantity__c, SBQQ__ProductName__c, Related_Product__c, SBQQ__StartDate__c, SBQQ__EndDate__c, SBQQ__CustomerTotal__c, SBQQ__Product__c, SBQQ__ProductCode__c, SBQQ__Product__r.Family, SBQQ__Product__r.Program__c, SBQQ__Product__r.Program__r.Program_Acronym__c, SBQQ__Product__r.Program__r.Name FROM SBQQ__QuoteLine__c
     WHERE SBQQ__Quote__c = :creditingOpp.SBQQ__PrimaryQuote__c AND SBQQ__EndDate__c <= :creditingOpp.SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c
     ORDER BY SBQQ__CustomerTotal__c ASC ];
 }
@@ -65,7 +63,6 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
     }
  	mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
     programAcronym = qle.SBQQ__Product__r.Program__r.Program_Acronym__c != null ? qle.SBQQ__Product__r.Program__r.Program_Acronym__c : mapOfProgramAndParentProductName.get(qle.Related_Product__c);
-
     for(String eventProduct : mapOfSeperateEvents.keySet()){
         System.debug('eventProduct =  ' + eventProduct);
         System.debug('qle.Product_Code_Combination__c =  ' + qle.Product_Code_Combination__c);
@@ -137,7 +134,6 @@ if(!listOfQLsAssociatedToContracts.isEmpty() && listOfQLsAssociatedToContracts.s
         }
     }
 }
-
 if(isDiscountProductUsed){
     System.debug('------------------------------------------------ALERT - Discount Product Used - NBB amount may differ ---------------------------------------------');
 }
@@ -156,16 +152,16 @@ if(oneTimeProgramPresentOf_Seramount){
 System.debug('setOfProgramsAcronyms =  ' + setOfProgramsAcronyms);
 System.debug('Total Programs to credit = ' + setOfProgramsAcronyms.size());
 for(String program : setOfProgramsAcronyms){
-    System.debug('------------------------------------NBB Details: Program to Credit-------------------------------------------'); 
+    System.debug('------------------------------------NBB Details: Program to Credit-------------------------------------------');
     if(identifiedAsRenewal || ( setOfOneTimePrograms_Seramount.contains(program) || (isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  && !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')) ) ){
         System.debug('------------------------------------New Sale-------------------------------------------');
     }
     else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){
         System.debug('----------------------------------Upsell RBB------------------------------------------');
-    } 
-    else{ 
+    }
+    else{
         identifiedAsRenewal = true;
-        System.debug('----------------------------------Renewal----------------------------------------------'); 
+        System.debug('----------------------------------Renewal----------------------------------------------');
     }
     Integer totalDays = mapOfProgramStartDate.get(program).daysBetween(mapOfProgramEndDate.get(program)) + 1;
     Decimal adminAndTravelFee = mapOfProgramAndAdminTravelFee.containsKey(program) ? mapOfProgramAndAdminTravelFee.get(program) : 0;
