@@ -11,7 +11,6 @@ String amendmentOpp = 'Amendment';
 String renewalOpp = 'Renewal';
 String legacyAcquisitionOpp = 'Legacy Acquisition';
 Boolean isOppRenewalUpsell = false;
-Boolean identifiedAsRenewal = false;
 Map<String,Date> mapOfProgramStartDate = new Map<String,Date>();
 Map<String,Date> mapOfProgramEndDate = new Map<String,Date>();
 Map<String,Decimal> mapOfProgramAndTotalCost = new Map<String,Decimal>();
@@ -19,7 +18,7 @@ Map<String, Decimal> mapOfProgramAndNBBAmount = new Map<String, Decimal>();
 Map<String, Decimal> mapOfProgramAndAdminTravelFee = new Map<String, Decimal>();
 Map<String, String> mapOfProgramAndParentProductName = new Map<String, String>();
 Set<String> setOfRenewablePrograms_Seramount = new Set<String>{'EDBP','EDLC', 'EDATS', 'EDSPO','EDSLS', 'EDLRS', 'EDHR'};
-// Set<String> setOfOneTimePrograms_Seramount = new Set<String>{'EDEV','EDCON', 'EDLRN', 'EDRS' };
+// Set<String> setOfOneTimePrograms_Seramount = new Set<String>{'EDEV','EDCON', 'EDLRN' };
 Set<String> setOfOneTimePrograms_Seramount = new Set<String>{'EDCON', 'EDLRN', 'EDRS', 'EDEV - EmERGe','EDEV - Global Emerge','EDEV - Lead with Ambition','EDEV - Work Beyond Summit and Gala Awards','EDEV - All Paid Events Ticket Package'};
 Set<String> setOfEvents_Seramount = new Set<String>{
     'SMT-EmERGe',
@@ -121,7 +120,8 @@ Boolean isParentOppBlank = creditingOpp.Parent_Opportunity__c == null;
 Boolean isParentOppContracted = creditingOpp.Parent_Opportunity__c != null ? (creditingOpp.Parent_Opportunity__r.SBQQ__Ordered__c || creditingOpp.Parent_Opportunity__r.SBQQ__Contracted__c) : false;
 Boolean contractExist = false;
 Set<String> setOfRenewalbleProgramsSoldInPast = new Set<String>();
-List<Contract> listOfContractOnAccount = [SELECT ID FROM Contract WHERE AccountId = :creditingOpp.AccountId AND EndDate > :Date.today().addYears(-1) AND ID != :creditingOpp.LOA_Contract__c];
+Date endDateOfContractToConsider = Date.today() < creditingOpp.SBQQ__PrimaryQuote__r.SBQQ__StartDate__c ? Date.today().addYears(-1) : creditingOpp.SBQQ__PrimaryQuote__r.SBQQ__StartDate__c.addYears(-1);
+List<Contract> listOfContractOnAccount = [SELECT ID, ContractNumber FROM Contract WHERE AccountId = :creditingOpp.AccountId AND EndDate > :endDateOfContractToConsider AND ID != :creditingOpp.LOA_Contract__c];
 List<SBQQ__QuoteLine__c> listOfQLsAssociatedToContracts = [SELECT ID, SBQQ__Product__c, SBQQ__ProductCode__c, SBQQ__Product__r.Program__c, SBQQ__Product__r.Program__r.Program_Acronym__c, SBQQ__Product__r.Program__r.Name
 FROM SBQQ__QuoteLine__c
 WHERE SBQQ__Quote__r.SBQQ__Primary__c = true AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Ordered__c = true OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Contracted__c = true ) AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__c = :listOfContractOnAccount OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__AmendedContract__c = :listOfContractOnAccount)
@@ -134,6 +134,7 @@ if(!listOfQLsAssociatedToContracts.isEmpty() && listOfQLsAssociatedToContracts.s
         }
     }
 }
+System.debug('setOfRenewalbleProgramsSoldInPast = '  + setOfRenewalbleProgramsSoldInPast);
 if(isDiscountProductUsed){
     System.debug('------------------------------------------------ALERT - Discount Product Used - NBB amount may differ ---------------------------------------------');
 }
@@ -146,10 +147,7 @@ if(creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c != nul
 if(oneTimeProgramPresentOf_Seramount){
     System.debug('One Time Program Present');
     System.debug('New Sale for One Time Program');
-    identifiedAsRenewal = false;
 }
-
-
 Integer counter = 0;
 for(String program : setOfProgramsAcronyms){
       Integer totalDays = mapOfProgramStartDate.get(program).daysBetween(mapOfProgramEndDate.get(program)) + 1;
@@ -167,7 +165,7 @@ for(String program : setOfProgramsAcronyms){
       System.debug(' Admin And Travel Fee : ' + mapOfProgramAndAdminTravelFee);
       System.debug('===========================================================================================================================');
     }
-    if(identifiedAsRenewal || ( setOfOneTimePrograms_Seramount.contains(program) || (isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  && !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')) ) ){
+    if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || ( setOfOneTimePrograms_Seramount.contains(program) || (isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  && !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')) ) ){
         System.debug('--------------------------------------------------------New Sale--------------------------------------------------------');     
         
     }
@@ -175,7 +173,6 @@ for(String program : setOfProgramsAcronyms){
         System.debug('----------------------------------Upsell RBB------------------------------------------');
     }
     else{
-        identifiedAsRenewal = true;
         System.debug('----------------------------------Renewal----------------------------------------------');
     }
     Decimal nbbAmount = 0;
@@ -197,34 +194,20 @@ for(String program : setOfProgramsAcronyms){
     }
 
     if(setOfOneTimePrograms_Seramount.contains(program)){
-        if(program == 'EDEV - EmERGe' || program == 'EDEV - Global Emerge' || program == 'EDEV - Work Beyond Summit and Gala Awards' || program == 'EDEV - Lead with Ambition' || program == 'EDEV - All Paid Events Ticket Package' ){
-
-              System.debug('------------------------------------------Program to Credit :'+program +' -----------------------------------------');
-              System.debug(' Credited User : ' + creditingOpp.Owner.Name);
-              System.debug(' Program Name : ' + program);
-              System.debug(' NBB Amount : ' + nbbAmount.setScale(2) );
-              System.debug(' NBB Type : Un-Posted Risk');
-              Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
-              System.debug(' Binder Date : Date of the Event');
-              System.debug(' ATL Date : Date of the Event');
-              System.debug(' Get the date of the event from : ' + seramountEvents);     
-              
-        }
-        Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
+        System.debug('------------------------------------------Program to Credit :'+program +' -----------------------------------------');
+        System.debug(' Credited User : ' + creditingOpp.Owner.Name);
+        System.debug(' Program Name : ' + program);
+        System.debug(' NBB Amount : ' + nbbAmount.setScale(2) );
+        System.debug(' NBB Type : Un-Posted Risk');
+        System.debug(' Binder Date : Date of the Event');
+        System.debug(' ATL Date : Date of the Event');
+        System.debug(' Get the date of the event from : ' + seramountEvents);
     } else{
         System.debug('-----------------------------------------------Program to Credit :'+program +' ----------------------------------------------');
         System.debug(' Credited User : ' + creditingOpp.Owner.Name);
         System.debug(' Program Name : ' + program);
         System.debug(' NBB Amount : ' + nbbAmount.setScale(2) );
-        if(program == 'EDRS')
-        {
-           System.debug(' NBB Type: Un-Posted Risk');
-        }
-        else
-        {
-            System.debug(' NBB Type : Base Fee');
-        }
-        
+        System.debug(' NBB Type : Base Fee');        
         Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
         System.debug(' Binder Date : '  + atlBinderDate);
         System.debug(' ATL Date : ' + atlBinderDate);
