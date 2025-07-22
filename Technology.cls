@@ -189,24 +189,23 @@ else{
     System.debug('----------------------------------Renewal----------------------------------------------'); 
 } 
 
-if(!identifiedAsRenewal){    
-System.debug('------------------------------------NBB Details: Program to Credit-------------------------------------------'); 
-System.debug(' mapOf Program And Parent Product Name (For A&T and Imp) = ' + mapOfProgramAndParentProductName); 
-System.debug(' Propsal Start Date = ' + mapOfProgramStartDate.get(program)); 
-System.debug(' Proposal End Date = ' + mapOfProgramEndDate.get(program)); 
-System.debug(' Total Program Cost =>' + mapOfProgramAndTotalCost);
-System.debug(' Admin and Travel Fee =>' + mapOfProgramAndAdminTravelFee);
-System.debug(' Implementation Fee =>' + mapOfProgramAndImplementationFee);
-System.debug(' NBB Amount =>' + mapOfProgramAndNBBAmount); 
-System.debug('Program ==> Program Cost');
-Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
-System.debug('Binder Date: '  + atlBinderDate);
-System.debug('ATL Date: ' + atlBinderDate);
-System.debug('Opp Owner: ' + creditingOpp.Owner.Name);
 
-for(String prog: mapOfProgramAndNBBAmount.keySet()){
-    System.debug(prog + ' ==>    ' + mapOfProgramAndNBBAmount.get(prog));
-}
+for(String program : setOfProgramsAcronyms){
+    if(!identifiedAsRenewal){
+        System.debug('------------------------------------NBB Details: Program to Credit-------------------------------------------'); 
+        System.debug(' mapOf Program And Parent Product Name (For A&T and Imp) = ' + mapOfProgramAndParentProductName); 
+        System.debug(' Propsal Start Date = ' + mapOfProgramStartDate.get(program)); 
+        System.debug(' Proposal End Date = ' + mapOfProgramEndDate.get(program)); 
+        System.debug(' Total Program Cost =>' + mapOfProgramAndTotalCost.get(program));
+        System.debug(' Admin and Travel Fee =>' + mapOfProgramAndAdminTravelFee.get(program));
+        System.debug(' Implementation Fee =>' + mapOfProgramAndImplementationFee.get(program));
+        System.debug(' NBB Amount =>' + mapOfProgramAndNBBAmount.get(program).setScale(2)); 
+        System.debug('Program ==> Program Cost');
+        Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
+        System.debug('Binder Date: '  + atlBinderDate);
+        System.debug('ATL Date: ' + atlBinderDate);
+        System.debug('Opp Owner: ' + creditingOpp.Owner.Name);
+    }
 }
 if(isDiscountProductUsed){
     System.debug('---------------------------------------------ALERT - Discount Product Used - NBB amount may differ ------------------------------------------'); 
