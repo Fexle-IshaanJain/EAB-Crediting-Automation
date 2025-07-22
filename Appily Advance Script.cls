@@ -178,8 +178,8 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
             setOfProgramsAcronyms.remove(programAcronym);
         }
 
-        System.debug('program => ' + programAcronym);
-        System.debug('First Year Total => ' + mapOfProgramAndFirstYearTotal.get(programAcronym));
+        // System.debug('program => ' + programAcronym);
+        // System.debug('First Year Total => ' + mapOfProgramAndFirstYearTotal.get(programAcronym));
 }
 
 for(SBQQ__QuoteLine__c qle :listOfQLs){
@@ -227,19 +227,19 @@ AND (SBQQ__ProductCode__c IN :setOfProductCode OR SBQQ__Product__r.Program__r.Pr
 contractExist = listOfQLsAssociatedToContracts.size() > 0;  
 
 
-System.debug('listOfQLsAssociatedToContracts = ' + listOfQLsAssociatedToContracts);
-System.debug('isInitiatingOpp = ' + isInitiatingOpp);
-System.debug('isThisARenewalForecasting = ' + isThisARenewalForecasting);
-System.debug('isParentOppBlank = ' + isParentOppBlank );
-System.debug('isParentOppContracted = ' + isParentOppContracted);
-System.debug('contractExist = ' + contractExist);
-System.debug('creditingOpp.SBQQ__AmendedContract__c = ' + creditingOpp.SBQQ__AmendedContract__c);
-System.debug('creditingOpp.Is_this_an_amend_and_restate_contract__c = ' + creditingOpp.Is_this_an_amend_and_restate_contract__c);
+// System.debug('listOfQLsAssociatedToContracts = ' + listOfQLsAssociatedToContracts);
+// System.debug('isInitiatingOpp = ' + isInitiatingOpp);
+// System.debug('isThisARenewalForecasting = ' + isThisARenewalForecasting);
+// System.debug('isParentOppBlank = ' + isParentOppBlank );
+// System.debug('isParentOppContracted = ' + isParentOppContracted);
+// System.debug('contractExist = ' + contractExist);
+// System.debug('creditingOpp.SBQQ__AmendedContract__c = ' + creditingOpp.SBQQ__AmendedContract__c);
+// System.debug('creditingOpp.Is_this_an_amend_and_restate_contract__c = ' + creditingOpp.Is_this_an_amend_and_restate_contract__c);
 
 
 if( isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank || !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){ 
 
-    System.debug('------------------------------------New Sale-------------------------------------------'); 
+    System.debug('====================================================== New Sale ======================================================'); 
 
 } 
 
@@ -265,7 +265,8 @@ if(creditingOpp.SBQQ__PrimaryQuote__r.SBQQ__StartDate__c >= contractSignatureDat
     effectiveStartDate = contractSignatureDate;
 }
 
-System.debug('Effective Start Date: ' + effectiveStartDate);
+System.debug('--------------------------------------------- Deal Information ---------------------------------------------');
+System.debug(' Effective Start Date: ' + effectiveStartDate);
 
 Date currentFYStart;
 
@@ -294,11 +295,12 @@ Q3Start = Date.newInstance(currentFYStart.year() + 1, 1, 1);
 Q4Start = Date.newInstance(currentFYStart.year() + 1, 4, 1);
 
 
-System.debug('currentFyStart: '+ currentFYStart);
-System.debug('nextFYStart: '+ nextFYStart);
-System.debug('Q2 Start: '+ Q2Start);
-System.debug('Q3 Start: '+ Q3Start);
-System.debug('Q4 Start: '+ Q4Start);
+System.debug(' Current FY Start: '+ currentFYStart);
+System.debug(' Q1 Start: ' + currentFYStart);
+System.debug(' Q2 Start: '+ Q2Start);
+System.debug(' Q3 Start: '+ Q3Start);
+System.debug(' Q4 Start: '+ Q4Start);
+System.debug(' Next FY Start: '+ nextFYStart);
 
 mapOfQuarterAndProration.put('Q1', 0.75);
 mapOfQuarterAndProration.put('Q2', 0.50);
@@ -312,7 +314,9 @@ Boolean isFutureDeal = effectiveStartDate >= nextFyStart;
 
 Integer totalGroups = listOfGroups.size();
 
-Integer totalNbbs = setOfAppilyAdvanceProAccronyms.size();
+Integer totalNbbs;
+
+Integer totalBaseOrFutureRev = setOfAppilyAdvanceProAccronyms.size();
 
 Integer totalFutureRecNbbREcords = 0;
 
@@ -356,11 +360,18 @@ if(effectiveStartDate < Q2Start){
     qtr = 'Future';
 }
 
-System.debug('Quarter: '+ qtr);
+System.debug(' Deal falls in: '+ qtr);
+
+if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c != null){
+    System.debug('-----------------ALERT - Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c + ' ---------------  Date: '+ creditingOpp.SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c + ' --------------'); 
+}
+if(creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c != null){
+    System.debug('-----------------ALERT - Secondary Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c + '-------------   Date: '+ creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Early_Termination_Date__c + ' ---------------');
+}
 
 securedYearValue = mapOfQuarterAndProration.get(qtr) + totalGroups -1;
 
-System.debug('Secured Year Value: ' + securedYearValue);
+
 
 // System.debug('Total NBBs to be created: ' + totalNbbs);
 
@@ -418,7 +429,7 @@ for(String program : setOfAppilyAdvanceProAccronyms){
  
 
     if(date.today().month() == mapOfProgramStartDate.get(program).month()){
-        dateATL = date.today();
+        dateATL = today; //date.today();
     }else{
         dateATL = Date.newInstance(mapOfProgramStartDate.get(program).year(), mapOfProgramStartDate.get(program).month(), 1);
     }
@@ -427,70 +438,74 @@ for(String program : setOfAppilyAdvanceProAccronyms){
         System.debug('------------------------------------ FIXED RATE CONTRACT ------------------------------------');
     }
 
-    System.debug('------------------------------------' + program + ' Summary ------------------------------------');
-    System.debug('Heighest Year total: ' + tempList[tempList.size()-1]);
-    System.debug('Total Prog Cost: '+totalProgramCost);
-    System.debug('Total NBB => '+ nbbAmount);
-    System.debug('Base Fee Amount => ' + baseFeeAmount);
-    System.debug('Future Revenue Amount => ' + futureRevenue);
-    System.debug('Future Year Rec. NBB Amount => ' + futureYearRecNBB);
-    System.debug('Temp List Size: ' + tempList.size());
-    System.debug('tempList: '+ tempList);
+    System.debug('\n');
+    System.debug('------------------------------------ Program: ' + program + ' Summary ------------------------------------');
+    System.debug(' Yearly Program Totals: '+ tempList);
+    System.debug(' Highest Year total: ' + tempList[tempList.size()-1]);
+    System.debug(' Total Program Cost: '+totalProgramCost);
+    System.debug(' Secured Year Value: ' + securedYearValue);
+    System.debug(' Total NBB: '+ nbbAmount);
+    System.debug(' Base Fee Amount: ' + baseFeeAmount);
+    System.debug(' Future Revenue Amount: ' + futureRevenue);
+    System.debug(' Future Year Rec. NBB Amount: ' + futureYearRecNBB);
+    
 
     if(futureYearRecNBB > 0){
 
+        System.debug('\n');
+        System.debug('------------------------------------------ Crediting Record Details -----------------------------------------');
         System.debug('------------------------------------ NBB ('+ dealType +') Record Details ------------------------------------');
-        System.debug('Program => ' + program);
-        System.debug('Credited User => '+ oppOwner);
+        System.debug(' Program: ' + program);
+        System.debug(' Credited User: '+ oppOwner);
         if(dealType == 'Future Revenue'){
-            System.debug('NBB Amount => ' + futureRevenue);  
+            System.debug(' NBB Amount: ' + futureRevenue);  
         }else{
-            System.debug('NBB Amount => ' + baseFeeAmount);
+            System.debug(' NBB Amount:' + baseFeeAmount);
         }
-        System.debug('NBB Type => '+ dealType);
-        System.debug('ATL Date => '+ dateATL);
-        System.debug('Binder Date => '+ dateATL);
-        System.debug('Deal Type => '+ 'New Sale');
+        System.debug(' NBB Type: '+ dealType);
+        System.debug(' ATL Date: '+ dateATL);
+        System.debug(' Binder Date: '+ dateATL);
+        System.debug(' Deal Type: '+ 'New Sale');
 
         System.debug('------------------------------------ NBB (Future Year Rec. NBB) Record Details ------------------------------------');
-        System.debug('Program => ' + program);
-        System.debug('Credited User => '+ oppOwner);
-        System.debug('NBB Amount => ' + futureYearRecNBB);
-        System.debug('NBB Type => '+ dealTypeFutureYearRecNBB);
-        System.debug('ATL Date => '+ dateATL);
-        System.debug('Binder Date => '+ dateATL);
-        System.debug('Deal Type => '+ 'New Sale');
+        System.debug(' Program: ' + program);
+        System.debug(' Credited User: '+ oppOwner);
+        System.debug(' NBB Amount: ' + futureYearRecNBB);
+        System.debug(' NBB Type: '+ dealTypeFutureYearRecNBB);
+        System.debug(' ATL Date: '+ dateATL);
+        System.debug(' Binder Date: '+ dateATL);
+        System.debug(' Deal Type: '+ 'New Sale');
 
     } else{
 
         System.debug('------------------------------------ NBB ('+ dealType +') Record Details ------------------------------------');
-        System.debug('Program => ' + program);
-        System.debug('Credited User => '+ oppOwner);
-        System.debug('NBB Amount => ' + baseFeeAmount);
-        System.debug('NBB Type => '+ dealType);
-        System.debug('ATL Date => '+ dateATL);
-        System.debug('Binder Date => '+ dateATL);
-        System.debug('Deal Type => '+ 'New Sale');
+        System.debug(' Program => ' + program);
+        System.debug(' Credited User => '+ oppOwner);
+        System.debug(' NBB Amount => ' + baseFeeAmount);
+        System.debug(' NBB Type => '+ dealType);
+        System.debug(' ATL Date => '+ dateATL);
+        System.debug(' Binder Date => '+ dateATL);
+        System.debug(' Deal Type => '+ 'New Sale');
 
     }
 
     System.debug('------------------------------------ 1st Shadow Record Details ------------------------------------');
-    System.debug('Program => ' + program);
-    System.debug('Credited User => '+ 'ALR PDE');
-    System.debug('NBB Amount => ' + shadowNBB);
-    System.debug('NBB Type => '+ 'Shadow Credit');
-    System.debug('ATL Date => '+ dateATL);
-    System.debug('Binder Date => '+ dateATL);
-    System.debug('Deal Type => '+ 'New Sale');
+    System.debug(' Program => ' + program);
+    System.debug(' Credited User => '+ 'ALR PDE');
+    System.debug(' NBB Amount => ' + shadowNBB);
+    System.debug(' NBB Type => '+ 'Shadow Credit');
+    System.debug(' ATL Date => '+ dateATL);
+    System.debug(' Binder Date => '+ dateATL);
+    System.debug(' Deal Type => '+ 'New Sale');
 
     System.debug('------------------------------------ 2nd Shadow Record Details ------------------------------------');
-    System.debug('Program => ' + program);
-    System.debug('Credited User => '+ 'Adam Sutton');
-    System.debug('NBB Amount => ' + adamShadowNBB);
-    System.debug('NBB Type => '+ 'Shadow Credit');
-    System.debug('ATL Date => '+ dateATL);
-    System.debug('Binder Date => '+ dateATL);
-    System.debug('Deal Type => '+ 'New Sale');
+    System.debug(' Program => ' + program);
+    System.debug(' Credited User => '+ 'Adam Sutton');
+    System.debug(' NBB Amount => ' + adamShadowNBB);
+    System.debug(' NBB Type => '+ 'Shadow Credit');
+    System.debug(' ATL Date => '+ dateATL);
+    System.debug(' Binder Date => '+ dateATL);
+    System.debug(' Deal Type => '+ 'New Sale');
 
     if(program == membershipAddedToProg){
        System.debug('////////// Please Note that Cappex Membership Amounts are added to this program ///////////////////'); 
@@ -498,14 +513,13 @@ for(String program : setOfAppilyAdvanceProAccronyms){
     
 }
 
-
-
-totalNbbs += totalFutureRecNbbREcords + totalShadowRecords;
-
-System.debug('------------------------------------ Total NBB records summary ------------------------------------');
-System.debug('Total future Year Rec NBB records: ' + totalFutureRecNbbREcords);
-System.debug('Total Shadow Records: '+ totalShadowRecords);
-System.debug('Total Records to be created: '+ totalNbbs);
-
+totalNbbs = totalFutureRecNbbREcords + totalShadowRecords + totalBaseOrFutureRev;
+System.debug('\n');
+System.debug('---------------------------------------- Total NBB Records Summary ----------------------------------------');
+System.debug(' Total '+ dealType + ' records: ' +  totalBaseOrFutureRev);
+System.debug(' Total Future Year Rec NBB records: ' + totalFutureRecNbbREcords);
+System.debug(' Total Shadow Records: '+ totalShadowRecords);
+System.debug(' Total Records to be created: '+ totalNbbs);
+System.debug('-----------------------------------------------------------------------------------------------------------');
 
 
