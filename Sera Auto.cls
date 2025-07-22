@@ -61,15 +61,19 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
         isDiscountProductUsed = true;
     }
  	mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
+    System.debug('qle.SBQQ__ProductCode__c = ' + qle.SBQQ__ProductCode__c);
     programAcronym = qle.SBQQ__Product__r.Program__r.Program_Acronym__c != null ? qle.SBQQ__Product__r.Program__r.Program_Acronym__c : mapOfProgramAndParentProductName.get(qle.Related_Product__c);
+    System.debug('programAcronym = ' + programAcronym);
     for(String eventProduct : mapOfSeperateEvents.keySet()){
         //System.debug('eventProduct =  ' + eventProduct);
         //System.debug('qle.Product_Code_Combination__c =  ' + qle.Product_Code_Combination__c);
         //System.debug('qle.Related_Product_with_Parent_Product__c =  ' + qle.Related_Product_with_Parent_Product__c);
-        if((qle.Product_Code_Combination__c != null &&  qle.Product_Code_Combination__c.contains(eventProduct)) || (qle.Related_Product_with_Parent_Product__c != null && qle.Related_Product_with_Parent_Product__c.contains(eventProduct))){
+        if(((qle.Product_Code_Combination__c != null &&  qle.Product_Code_Combination__c.contains(eventProduct)) || (qle.Related_Product_with_Parent_Product__c != null && qle.Related_Product_with_Parent_Product__c.contains(eventProduct)) ) && qle.SBQQ__ProductCode__c != 'SMT-100_Bst_Cmpns_Cmpt_Bmrk'){
+            System.debug('inside events loop if');
             programAcronym = mapOfSeperateEvents.get(eventProduct);
         }
     }
+    System.debug('programAcronym = ' + programAcronym);
     if(programAcronym != null){
             setOfProgramsAcronyms.add(programAcronym);
             if(setOfRenewablePrograms_Seramount.contains(qle.SBQQ__Product__r.Program__r.Program_Acronym__c)){
