@@ -15,7 +15,7 @@ String legacyAcquisitionOpp = 'Legacy Acquisition';
 
 Boolean isOppRenewalUpsell = false;  
 Boolean identifiedAsRenewal = false;
-
+Set<String> setOfRenewalbleProgramsSoldInPast = new Set<String>();
 Map<String,Date> mapOfProgramStartDate = new Map<String,Date>();  
 Map<String,Date> mapOfProgramEndDate = new Map<String,Date>();  
 Map<String,Decimal> mapOfProgramAndTotalCost = new Map<String,Decimal>();  
@@ -60,61 +60,58 @@ if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c == null || creditingOpp.SBQQ__P
     ORDER BY Related_Product__c ASC ];  
 }
 
- for(SBQQ__QuoteLine__c qle :listOfQLs){  
-        String programAcronym = null;
+for(SBQQ__QuoteLine__c qle :listOfQLs){  
+    String programAcronym = null;
      
-     //System.debug('---------------------------------------------------------');
-       // System.debug('qle.SBQQ__ProductCode__c = ' + qle.SBQQ__ProductCode__c);
-        //System.debug('qle.SBQQ__ProductName__c = ' + qle.SBQQ__ProductName__c);
-        //System.debug('qle.SBQQ__Product__r.Program__r.Program_Acronym__c = ' + qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
+    //System.debug('---------------------------------------------------------');
+    // System.debug('qle.SBQQ__ProductCode__c = ' + qle.SBQQ__ProductCode__c);
+    //System.debug('qle.SBQQ__ProductName__c = ' + qle.SBQQ__ProductName__c);
+    //System.debug('qle.SBQQ__Product__r.Program__r.Program_Acronym__c = ' + qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
 
-        //System.debug('qle.SBQQ__CustomerTotal__c = ' + qle.SBQQ__CustomerTotal__c);
+    //System.debug('qle.SBQQ__CustomerTotal__c = ' + qle.SBQQ__CustomerTotal__c);
 
-        if(qle.SBQQ__ProductCode__c == 'DISC-EAB_Invstmnt'){
-            isDiscountProductUsed = true;
-        }
-     	//System.debug('Program_Acronym__c = ' + qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
-        mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, qle.SBQQ__Product__r.Program__r.Program_Acronym__c);  
-        programAcronym = qle.SBQQ__Product__r.Program__r.Program_Acronym__c != null ? qle.SBQQ__Product__r.Program__r.Program_Acronym__c : mapOfProgramAndParentProductName.get(qle.Related_Product__c);
-		programAcronym = mapOfEdifyPrograms.containsKey(programAcronym) ? mapOfEdifyPrograms.get(programAcronym) : programAcronym;
-     	//System.debug('programAcronym used = ' + programAcronym);
+    if(qle.SBQQ__ProductCode__c == 'DISC-EAB_Invstmnt'){
+        isDiscountProductUsed = true;
+    }
+    //System.debug('Program_Acronym__c = ' + qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
+    mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, qle.SBQQ__Product__r.Program__r.Program_Acronym__c);  
+    programAcronym = qle.SBQQ__Product__r.Program__r.Program_Acronym__c != null ? qle.SBQQ__Product__r.Program__r.Program_Acronym__c : mapOfProgramAndParentProductName.get(qle.Related_Product__c);
+	programAcronym = mapOfEdifyPrograms.containsKey(programAcronym) ? mapOfEdifyPrograms.get(programAcronym) : programAcronym;
+    //System.debug('programAcronym used = ' + programAcronym);
      
-        if(programAcronym != null){  
-            setOfProgramsAcronyms.add(programAcronym); 
-            Date startDate = qle.SBQQ__StartDate__c; 
-            Date endDate = qle.SBQQ__EndDate__c; 
-            if(mapOfProgramStartDate != null && mapOfProgramStartDate.containsKey(programAcronym)){ 
-                if(startDate > mapOfProgramStartDate.get(programAcronym)){ 
-                    startDate = mapOfProgramStartDate.get(programAcronym); 
-
-                } 
+    if(programAcronym != null){  
+        setOfProgramsAcronyms.add(programAcronym); 
+        Date startDate = qle.SBQQ__StartDate__c; 
+        Date endDate = qle.SBQQ__EndDate__c; 
+        if(mapOfProgramStartDate != null && mapOfProgramStartDate.containsKey(programAcronym)){ 
+            if(startDate > mapOfProgramStartDate.get(programAcronym)){ 
+                startDate = mapOfProgramStartDate.get(programAcronym); 
             } 
-            if(mapOfProgramEndDate != null && mapOfProgramEndDate.containsKey(programAcronym)){ 
-                if(endDate < mapOfProgramEndDate.get(programAcronym)){ 
-                    endDate = mapOfProgramEndDate.get(programAcronym); 
-
-                } 
-
+        } 
+        if(mapOfProgramEndDate != null && mapOfProgramEndDate.containsKey(programAcronym)){ 
+            if(endDate < mapOfProgramEndDate.get(programAcronym)){ 
+                endDate = mapOfProgramEndDate.get(programAcronym); 
             } 
-            mapOfProgramStartDate.put(programAcronym, startDate);  
-            mapOfProgramEndDate.put(programAcronym, endDate);  
-            //System.debug('mapOfProgramAndTotalCost.containsKey(programAcronym) = ' + mapOfProgramAndTotalCost.containsKey(programAcronym));
-            if(mapOfProgramAndTotalCost.containsKey(programAcronym) && qle.SBQQ__ProductName__c != 'Administrative & Travel Fee' && qle.SBQQ__ProductName__c != 'Implementation Fee') {                  
-                mapOfProgramAndTotalCost.put(programAcronym, mapOfProgramAndTotalCost.get(programAcronym) + qle.SBQQ__CustomerTotal__c);  
+        } 
+        mapOfProgramStartDate.put(programAcronym, startDate);  
+        mapOfProgramEndDate.put(programAcronym, endDate);  
+        //System.debug('mapOfProgramAndTotalCost.containsKey(programAcronym) = ' + mapOfProgramAndTotalCost.containsKey(programAcronym));
+        if(mapOfProgramAndTotalCost.containsKey(programAcronym) && qle.SBQQ__ProductName__c != 'Administrative & Travel Fee' && qle.SBQQ__ProductName__c != 'Implementation Fee') {                  
+            mapOfProgramAndTotalCost.put(programAcronym, mapOfProgramAndTotalCost.get(programAcronym) + qle.SBQQ__CustomerTotal__c);  
 
-            } else if (qle.SBQQ__ProductName__c != 'Administrative & Travel Fee' && qle.SBQQ__ProductName__c != 'Implementation Fee') {  
-                mapOfProgramAndTotalCost.put(programAcronym, qle.SBQQ__CustomerTotal__c);  
-
-            }  
+        } else if (qle.SBQQ__ProductName__c != 'Administrative & Travel Fee' && qle.SBQQ__ProductName__c != 'Implementation Fee') {  
+            mapOfProgramAndTotalCost.put(programAcronym, qle.SBQQ__CustomerTotal__c);  
 
         }  
-        if(qle.SBQQ__Product__r.Family != 'Fee' && qle.SBQQ__Product__r.Family != 'Pass Through Cost'){  
-            setOfProductCode.add(qle.SBQQ__ProductCode__c);  
-        } 
-        if(isRenewalOpp && qle.Previous_Year_Quantity__c == 0){ 
-            isOppRenewalUpsell = true; 
-        } 
-     //System.debug('mapOfProgramAndTotalCost = ' + mapOfProgramAndTotalCost);
+
+    }  
+    if(qle.SBQQ__Product__r.Family != 'Fee' && qle.SBQQ__Product__r.Family != 'Pass Through Cost'){  
+        setOfProductCode.add(qle.SBQQ__ProductCode__c);  
+    } 
+    if(isRenewalOpp && qle.Previous_Year_Quantity__c == 0){ 
+        isOppRenewalUpsell = true; 
+    } 
+    //System.debug('mapOfProgramAndTotalCost = ' + mapOfProgramAndTotalCost);
     } 
     for(SBQQ__QuoteLine__c qle :listOfQLs){ 
     if(qle.SBQQ__ProductName__c == 'Administrative & Travel Fee'){            
@@ -146,15 +143,15 @@ if(tipsContract){
 
 mapOfProgramAndNBBAmount.put(program, nbbAmount.setScale(2));  
 
-if(program == 'BHAI'){
- System.debug('Program => ' + program);
- System.debug('totalDays = ' + totalDays);
- System.debug('adminAndTravelFee = ' + adminAndTravelFee);
- System.debug('implementationFee = ' + implementationFee);
- System.debug('cost of program without a&t = ' + mapOfProgramAndTotalCost.get(program));
- System.debug('nbbAmount = ' + nbbAmount);
+// if(program == 'BHAI'){
+//  System.debug('Program => ' + program);
+//  System.debug('totalDays = ' + totalDays);
+//  System.debug('adminAndTravelFee = ' + adminAndTravelFee);
+//  System.debug('implementationFee = ' + implementationFee);
+//  System.debug('cost of program without a&t = ' + mapOfProgramAndTotalCost.get(program));
+//  System.debug('nbbAmount = ' + nbbAmount);
 
-}
+// }
 
 } 
 
@@ -169,6 +166,12 @@ WHERE SBQQ__Quote__r.SBQQ__Primary__c = true AND (SBQQ__Quote__r.SBQQ__Opportuni
 AND (SBQQ__ProductCode__c IN :setOfProductCode OR SBQQ__Product__r.Program__r.Program_Acronym__c IN :setOfProgramsAcronyms)];  
 contractExist = listOfQLsAssociatedToContracts.size() > 0;  
 
+if(!listOfQLsAssociatedToContracts.isEmpty() && listOfQLsAssociatedToContracts.size() > 0){
+    for(SBQQ__QuoteLine__c qle :listOfQLsAssociatedToContracts){
+        setOfRenewalbleProgramsSoldInPast.add(qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
+    }
+}
+
 //System.debug('listOfQLsAssociatedToContracts = ' + listOfQLsAssociatedToContracts);
 //System.debug('isInitiatingOpp = ' + isInitiatingOpp);
 //System.debug('isThisARenewalForecasting = ' + isThisARenewalForecasting);
@@ -178,30 +181,30 @@ contractExist = listOfQLsAssociatedToContracts.size() > 0;
 //System.debug('creditingOpp.SBQQ__AmendedContract__c = ' + creditingOpp.SBQQ__AmendedContract__c);
 //System.debug('creditingOpp.Is_this_an_amend_and_restate_contract__c = ' + creditingOpp.Is_this_an_amend_and_restate_contract__c);
 
-if( isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){ 
-
-    System.debug('------------------------------------New Sale-------------------------------------------'); 
-} 
-else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){  
-    System.debug('----------------------------------Upsell RBB------------------------------------------'); 
-} 
-else{ 
-    identifiedAsRenewal = true;
-    System.debug('----------------------------------Renewal----------------------------------------------'); 
-} 
 
 
 for(String program : setOfProgramsAcronyms){
-    if(!identifiedAsRenewal && mapOfProgramAndNBBAmount.get(program) > 0){
-        System.debug('------------------------------------NBB Details: Program to Credit-------------------------------------------'); 
-        System.debug(' mapOf Program And Parent Product Name (For A&T and Imp) = ' + mapOfProgramAndParentProductName); 
-        System.debug(' Propsal Start Date = ' + mapOfProgramStartDate.get(program)); 
-        System.debug(' Proposal End Date = ' + mapOfProgramEndDate.get(program)); 
+    System.debug('------------------------------------NBB Details: Program to Credit-------------------------------------------'); 
+    
+    if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
+        System.debug('------------------------------------New Sale-------------------------------------------');
+    }
+    else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){
+        System.debug('----------------------------------Upsell RBB------------------------------------------');
+    }
+    else{
+        identifiedAsRenewal = true;
+        System.debug('----------------------------------Renewal----------------------------------------------');
+    }
+    if(mapOfProgramAndNBBAmount.get(program) > 0){
+        // System.debug(' mapOf Program And Parent Product Name (For A&T and Imp) = ' + mapOfProgramAndParentProductName); 
+        System.debug('Program ==> ' + program);
+        System.debug(' Program Start Date = ' + mapOfProgramStartDate.get(program)); 
+        System.debug(' Program End Date = ' + mapOfProgramEndDate.get(program)); 
         System.debug(' Total Program Cost =>' + mapOfProgramAndTotalCost.get(program));
         System.debug(' Admin and Travel Fee =>' + mapOfProgramAndAdminTravelFee.get(program));
         System.debug(' Implementation Fee =>' + mapOfProgramAndImplementationFee.get(program));
         System.debug(' NBB Amount =>' + mapOfProgramAndNBBAmount.get(program).setScale(2)); 
-        System.debug('Program ==> Program Cost');
         Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
         System.debug('Binder Date: '  + atlBinderDate);
         System.debug('ATL Date: ' + atlBinderDate);
