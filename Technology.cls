@@ -1,5 +1,5 @@
 //Technology
-ID OppId = ''; 
+ID OppId = '006Pr00000G6A0HIAV'; 
 Boolean tipsContract = false;
 
 Opportunity creditingOpp = [SELECT ID, StageName,  Owner.Name, LOA_Contract__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c
@@ -52,7 +52,7 @@ Set<String> setOfProductCode = new Set<String>();
 List<SBQQ__QuoteLine__c> listOfQLs = new List<SBQQ__QuoteLine__c>();
 if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c == null || creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c == 'Funds Appropriation Opt Out'){
     listOfQLs = [SELECT ID, Previous_Year_Quantity__c, SBQQ__ProductName__c, Related_Product__c, SBQQ__StartDate__c, SBQQ__EndDate__c, SBQQ__CustomerTotal__c, SBQQ__Product__c, SBQQ__ProductCode__c, SBQQ__Product__r.Family, SBQQ__Product__r.Program__c, SBQQ__Product__r.Program__r.Program_Acronym__c, SBQQ__Product__r.Program__r.Name FROM SBQQ__QuoteLine__c   
-    WHERE SBQQ__Quote__c = :creditingOpp.SBQQ__PrimaryQuote__c AND SBQQ__EndDate__c <= :creditingOpp.SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c
+    WHERE SBQQ__Quote__c = :creditingOpp.SBQQ__PrimaryQuote__c
     ORDER BY Related_Product__c ASC ];  
 } else {
     listOfQLs = [SELECT ID, Previous_Year_Quantity__c, SBQQ__ProductName__c, Related_Product__c, SBQQ__StartDate__c, SBQQ__EndDate__c, SBQQ__CustomerTotal__c, SBQQ__Product__c, SBQQ__ProductCode__c, SBQQ__Product__r.Family, SBQQ__Product__r.Program__c, SBQQ__Product__r.Program__r.Program_Acronym__c, SBQQ__Product__r.Program__r.Name FROM SBQQ__QuoteLine__c   
@@ -209,6 +209,10 @@ for(String program : setOfProgramsAcronyms){
         System.debug('Binder Date: '  + atlBinderDate);
         System.debug('ATL Date: ' + atlBinderDate);
         System.debug('Opp Owner: ' + creditingOpp.Owner.Name);
+        if(program == 'BHTF'){
+            System.debug('Transfer Portal --> Create Shadow credits if Opp Owner is not Transfer Portal PDE');
+        }
+
     }
 }
 if(isDiscountProductUsed){
@@ -221,3 +225,7 @@ if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c != null){
 if(creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c != null){
     System.debug('------------------------------------------------ALERT - Secondary Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c + ' ---------------------------------------------'); 
 }
+
+
+//BHTF Shadow credit identification
+//Discounting Product added in which program?
