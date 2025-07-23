@@ -11,7 +11,7 @@ Date contractSignatureDate = Date.parse(signedDate);
 Boolean tipsContract = false;
 
 
-Opportunity creditingOpp = [SELECT ID, StageName, LOA_Contract__c, Contract_Signature_Date__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c, Owner.Name
+Opportunity creditingOpp = [SELECT ID, StageName, LOA_Contract__c, Contract_Signature_Date__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c, Owner.Name, List_of_Product_Families__c
 FROM Opportunity
 WHERE ID = :OppId LIMIT 1]; 
  
@@ -65,6 +65,37 @@ Set<String> setOfProgramsAcronyms = new Set<String>();
 
 Set<String> setOfProductCode = new Set<String>();  
 
+List<Team_Membership__c> listOfAlrPDE = [SELECT Staff_member__r.Name FROM Team_Membership__c 
+                      WHERE Institution__c =: creditingOpp.AccountId
+                      AND Role__r.Name = 'PDE (EXEC)' AND Status__c = 'Active' 
+                      AND Program_Perspectives__c = 'ALR'
+                      LIMIT 1];
+
+
+List<Team_Membership__c> listOfAppilyAdvPDE= [SELECT Staff_member__r.Name FROM Team_Membership__c 
+                      WHERE Institution__c =: creditingOpp.AccountId
+                      AND Role__r.Name = 'PDE (EXEC)' AND Status__c = 'Active' 
+                      AND Program_Perspectives__c = 'ALR Cappex'
+                      LIMIT 1];
+
+String alrPDE;
+String appilyAdvPDE;
+
+if(listOfAlrPDE.size()>0){
+    alrPDE = listOfAlrPDE[0].Staff_member__r.Name;
+}
+
+if(listOfAppilyAdvPDE.size()>0){
+    appilyAdvPDE = listOfAppilyAdvPDE[0].Staff_member__r.Name;
+}
+
+String shadowCreditUser;
+
+if(creditingOpp.List_of_Product_Families__c.contains('Appily Advance - ALR') && listOfAlrPDE.size()>0){
+    shadowCreditUser = alrPDE;
+}else if(listOfAppilyAdvPDE.size()>0){
+    shadowCreditUser = appilyAdvPDE;
+}
 
 List<SBQQ__QuoteLine__c> listOfQLs = new List<SBQQ__QuoteLine__c>();
 List<SBQQ__QuoteLineGroup__c> listOfGroups = new List<SBQQ__QuoteLineGroup__c>();
@@ -136,11 +167,19 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
 
             mapOfProgramEndDate.put(programAcronym, endDate);  
 
-            if(mapOfProgramAndTotalCost.containsKey(programAcronym)) {  
-                
-                mapOfProgramAndTotalCost.put(programAcronym, mapOfProgramAndTotalCost.get(programAcronym) + qle.SBQQ__CustomerTotal__c);  
+            if(mapOfProgramAndTotalCost.containsKey(programAcronym)) { 
 
-            } else{  
+                if(qle.SBQQ__ProductName__c == 'Cappex Advance Membership' && qle.SBQQ__CustomerTotal__c < 0){
+                   mapOfProgramAndTotalCost.put(programAcronym, mapOfProgramAndTotalCost.get(programAcronym) + (0 - qle.SBQQ__CustomerTotal__c)); 
+                }else{
+                    mapOfProgramAndTotalCost.put(programAcronym, mapOfProgramAndTotalCost.get(programAcronym) + qle.SBQQ__CustomerTotal__c);  
+                }
+
+            } else{ 
+
+                if(qle.SBQQ__ProductName__c == 'Cappex Advance Membership' && qle.SBQQ__CustomerTotal__c < 0){
+                    mapOfProgramAndTotalCost.put(programAcronym, (0 - qle.SBQQ__CustomerTotal__c));
+                }  
 
                 mapOfProgramAndTotalCost.put(programAcronym, qle.SBQQ__CustomerTotal__c);     
 
@@ -186,14 +225,15 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
 
     if(qle.SBQQ__ProductCode__c == cappexMembership && qle.Related_Product__c == 'Appily Advance - ALR'){
         List<String> listOfStrings = new List<String>(setOfProgramsAcronyms);
-        String pro = listOfStrings[0];
-        System.debug('program to which membership will be added: ' + pro);
-        membershipAddedToProg = listOfStrings[0];
-        mapGrpAndTotal.get(pro).put(qle.SBQQ__Group__r.SBQQ__Number__c, 
-                                                mapGrpAndTotal.get(pro).get(qle.SBQQ__Group__r.SBQQ__Number__c) + qle.SBQQ__CustomerTotal__c);
+        if(listOfStrings.size() > 0){
+            String pro = listOfStrings[0];
+            System.debug('program to which membership will be added: ' + pro);
+            membershipAddedToProg = listOfStrings[0];
+            mapGrpAndTotal.get(pro).put(qle.SBQQ__Group__r.SBQQ__Number__c, 
+                                                    mapGrpAndTotal.get(pro).get(qle.SBQQ__Group__r.SBQQ__Number__c) + qle.SBQQ__CustomerTotal__c);
 
-        mapOfProgramAndTotalCost.put(pro, mapOfProgramAndTotalCost.get(pro) + qle.SBQQ__CustomerTotal__c);
-            
+            mapOfProgramAndTotalCost.put(pro, mapOfProgramAndTotalCost.get(pro) + qle.SBQQ__CustomerTotal__c);
+        }     
     }
 }
 
@@ -203,8 +243,9 @@ if(setOfProgramsAcronyms.contains('EDCPQ')){
     setOfAppilyAdvanceProAccronyms.remove('EDCPQ');
 } else if(setOfProgramsAcronyms.contains('RYAG')){
     setOfAppilyAdvanceProAccronyms.remove('RYAG');
+} else if(setOfProgramsAcronyms.contains('EDCP')){
+    setOfAppilyAdvanceProAccronyms.remove('EDCP');
 }
-
 
 Boolean isThisARenewalForecasting = creditingOpp.IsFcstRenewal__c == 'Yes';  
 
@@ -227,16 +268,6 @@ AND (SBQQ__ProductCode__c IN :setOfProductCode OR SBQQ__Product__r.Program__r.Pr
 contractExist = listOfQLsAssociatedToContracts.size() > 0;  
 
 
-// System.debug('listOfQLsAssociatedToContracts = ' + listOfQLsAssociatedToContracts);
-// System.debug('isInitiatingOpp = ' + isInitiatingOpp);
-// System.debug('isThisARenewalForecasting = ' + isThisARenewalForecasting);
-// System.debug('isParentOppBlank = ' + isParentOppBlank );
-// System.debug('isParentOppContracted = ' + isParentOppContracted);
-// System.debug('contractExist = ' + contractExist);
-// System.debug('creditingOpp.SBQQ__AmendedContract__c = ' + creditingOpp.SBQQ__AmendedContract__c);
-// System.debug('creditingOpp.Is_this_an_amend_and_restate_contract__c = ' + creditingOpp.Is_this_an_amend_and_restate_contract__c);
-
-
 if( isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank || !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){ 
 
     System.debug('====================================================== New Sale ======================================================'); 
@@ -254,7 +285,6 @@ else{
     System.debug('----------------------------------Renewal----------------------------------------------'); 
 
 }
-
 
 Date effectiveStartDate;
 
@@ -289,11 +319,9 @@ if(today < nextFYStart){
     currentFYStart = Date.newInstance(today.year(), 7, 1);
 }
 
-
 Q2Start = Date.newInstance(currentFYStart.year(), 10, 1);
 Q3Start = Date.newInstance(currentFYStart.year() + 1, 1, 1);
 Q4Start = Date.newInstance(currentFYStart.year() + 1, 4, 1);
-
 
 System.debug(' Current FY Start: '+ currentFYStart);
 System.debug(' Q1 Start: ' + currentFYStart);
@@ -320,7 +348,11 @@ Integer totalBaseOrFutureRev = setOfAppilyAdvanceProAccronyms.size();
 
 Integer totalFutureRecNbbREcords = 0;
 
-Integer totalShadowRecords = (setOfAppilyAdvanceProAccronyms.size())*2;
+Integer totalShadowRecords = 0; 
+
+if(listOfAlrPDE.size()>0){
+    totalShadowRecords = (setOfAppilyAdvanceProAccronyms.size())*2;
+}
 
 Decimal prorateMultiplier;
 
@@ -371,8 +403,6 @@ if(creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c != nul
 
 securedYearValue = mapOfQuarterAndProration.get(qtr) + totalGroups -1;
 
-
-
 // System.debug('Total NBBs to be created: ' + totalNbbs);
 
 for(String program : setOfAppilyAdvanceProAccronyms){
@@ -414,11 +444,11 @@ for(String program : setOfAppilyAdvanceProAccronyms){
 
     if(isCurrentFYDeal){
 
-        baseFeeAmount = (mapOfProgramAndFirstYearTotal.get(program)).setScale(2);
+        baseFeeAmount = (mapGrpAndTotal.get(program).get(1)).setScale(2);
         futureYearRecNBB = (nbbAmount - baseFeeAmount).setScale(2);
         dealType = dealTypeBaseFee;
     } else{
-        futureRevenue = (mapOfProgramAndFirstYearTotal.get(program)).setScale(2);
+        futureRevenue = (mapGrpAndTotal.get(program).get(1)).setScale(2);
         futureYearRecNBB = (nbbAmount - futureRevenue).setScale(2);
         dealType = dealTypeFutureRevenue;
     }
@@ -428,7 +458,7 @@ for(String program : setOfAppilyAdvanceProAccronyms){
     }
  
 
-    if(date.today().month() == mapOfProgramStartDate.get(program).month()){
+    if(/*date.today()*/today.month() == mapOfProgramStartDate.get(program).month()){
         dateATL = today; //date.today();
     }else{
         dateATL = Date.newInstance(mapOfProgramStartDate.get(program).year(), mapOfProgramStartDate.get(program).month(), 1);
@@ -438,7 +468,6 @@ for(String program : setOfAppilyAdvanceProAccronyms){
         System.debug('------------------------------------ FIXED RATE CONTRACT ------------------------------------');
     }
 
-    System.debug('\n');
     System.debug('------------------------------------ Program: ' + program + ' Summary ------------------------------------');
     System.debug(' Yearly Program Totals: '+ tempList);
     System.debug(' Highest Year total: ' + tempList[tempList.size()-1]);
@@ -448,12 +477,17 @@ for(String program : setOfAppilyAdvanceProAccronyms){
     System.debug(' Base Fee Amount: ' + baseFeeAmount);
     System.debug(' Future Revenue Amount: ' + futureRevenue);
     System.debug(' Future Year Rec. NBB Amount: ' + futureYearRecNBB);
+    if(program == membershipAddedToProg){
+       System.debug('\n'); 
+       System.debug('////////// Please Note that Cappex Membership Amounts are added to this program ///////////////////'); 
+    }
     
+
+    System.debug('\n');
+    System.debug('------------------------------------------ Crediting Record Details -----------------------------------------');
 
     if(futureYearRecNBB > 0){
 
-        System.debug('\n');
-        System.debug('------------------------------------------ Crediting Record Details -----------------------------------------');
         System.debug('------------------------------------ NBB ('+ dealType +') Record Details ------------------------------------');
         System.debug(' Program: ' + program);
         System.debug(' Credited User: '+ oppOwner);
@@ -489,26 +523,24 @@ for(String program : setOfAppilyAdvanceProAccronyms){
 
     }
 
-    System.debug('------------------------------------ 1st Shadow Record Details ------------------------------------');
-    System.debug(' Program => ' + program);
-    System.debug(' Credited User => '+ 'ALR PDE');
-    System.debug(' NBB Amount => ' + shadowNBB);
-    System.debug(' NBB Type => '+ 'Shadow Credit');
-    System.debug(' ATL Date => '+ dateATL);
-    System.debug(' Binder Date => '+ dateATL);
-    System.debug(' Deal Type => '+ 'New Sale');
+    if(shadowCreditUser != null){
+        System.debug('------------------------------------ 1st Shadow Record Details ------------------------------------');
+        System.debug(' Program => ' + program);
+        System.debug(' Credited User => '+ alrPDE);
+        System.debug(' NBB Amount => ' + shadowNBB);
+        System.debug(' NBB Type => '+ 'Shadow Credit');
+        System.debug(' ATL Date => '+ dateATL);
+        System.debug(' Binder Date => '+ dateATL);
+        System.debug(' Deal Type => '+ 'New Sale');
 
-    System.debug('------------------------------------ 2nd Shadow Record Details ------------------------------------');
-    System.debug(' Program => ' + program);
-    System.debug(' Credited User => '+ 'Adam Sutton');
-    System.debug(' NBB Amount => ' + adamShadowNBB);
-    System.debug(' NBB Type => '+ 'Shadow Credit');
-    System.debug(' ATL Date => '+ dateATL);
-    System.debug(' Binder Date => '+ dateATL);
-    System.debug(' Deal Type => '+ 'New Sale');
-
-    if(program == membershipAddedToProg){
-       System.debug('////////// Please Note that Cappex Membership Amounts are added to this program ///////////////////'); 
+        System.debug('------------------------------------ 2nd Shadow Record Details ------------------------------------');
+        System.debug(' Program => ' + program);
+        System.debug(' Credited User => '+ alrPDE);
+        System.debug(' NBB Amount => ' + adamShadowNBB);
+        System.debug(' NBB Type => '+ 'Shadow Credit');
+        System.debug(' ATL Date => '+ dateATL);
+        System.debug(' Binder Date => '+ dateATL);
+        System.debug(' Deal Type => '+ 'New Sale');
     }
     
 }
