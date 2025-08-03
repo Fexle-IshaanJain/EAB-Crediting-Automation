@@ -2,9 +2,19 @@
 ID OppId = ''; 
 Boolean tipsContract = false;
 
-Opportunity creditingOpp = [SELECT ID, StageName,  Owner.Name, LOA_Contract__c, LOA_Contract__r.StartDate, LOA_Contract__r.EndDate,  SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c
+Opportunity creditingOpp = [SELECT ID, StageName, List_of_Product_Families__c,  Owner.Name, LOA_Contract__c, LOA_Contract__r.StartDate, LOA_Contract__r.EndDate,  SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c
 FROM Opportunity
-WHERE ID = :OppId LIMIT 1];  
+WHERE ID = :OppId LIMIT 1];
+
+List<Team_Membership__c> listOfActiveTechPDE = [SELECT Staff_member__r.Name,Role__r.Name, Program_Perspectives__c, Role__r.Business_Line__c, Role__r.Department__c 
+FROM Team_Membership__c Where Active_Institution__c = :creditingOpp.AccountId AND Role__r.Name = 'PDE (Exec)' AND Program_Perspectives__c IN ('2Yr Nav, Edify','2Yr Nav, Edify, SAS 2 Year','4Yr Nav, Edify, Pan-Tech','4Yr Nav, Pan-Tech','Edify','Edify, SAS 2 Year','Forage')];
+
+// Set<String> setOfTechPDENames = new Set<String>();
+// if(!listOfActiveTechPDE.isEmpty()){
+//     for(Team_Membership__c techPde :listOfActiveTechPDE){
+//         setOfTechPDENames.add(listOfActiveTechPDE.Staff_member__r.Name);
+//     }
+// }
 
 String sendToFinance = 'Contract Received - Send to Finance';  
 String initiatingOpp = 'Initiating';  
@@ -22,7 +32,8 @@ Map<String,Decimal> mapOfProgramAndTotalCost = new Map<String,Decimal>();
 Map<String, Decimal> mapOfProgramAndNBBAmount = new Map<String, Decimal>();  
 Map<String, Decimal> mapOfProgramAndImplementationFee = new Map<String, Decimal>();  
 Map<String, Decimal> mapOfProgramAndAdminTravelFee = new Map<String, Decimal>();  
-Map<String, String> mapOfProgramAndParentProductName = new Map<String, String>();  
+Map<String, String> mapOfProgramAndParentProductName = new Map<String, String>();
+Set<String> setOfNavigateProgram = new Set<String>{'BHAPR','BHDR','BHCO','BHLMS','BHCON','BHPRO','BHSE','HECGC','BHGCL','BHAP','BHAN','BHAI','BHAF'};
 Map<String, String> mapOfEdifyPrograms = new Map<String, String>{
     'EDBEL' => 'EDBE',
     'EDBEP' => 'EDBE',
@@ -45,6 +56,8 @@ Boolean isAmendmentOpp =  creditingOpp.Type2__c == amendmentOpp;
 Boolean isRenewalOpp =  creditingOpp.Type2__c == renewalOpp || creditingOpp.SBQQ__RenewedContract__c != null;  
 Boolean isDiscountProductUsed = false;
 Boolean isLegacyAcquisitionOpp =  creditingOpp.Type2__c == legacyAcquisitionOpp;  
+Boolean bothEdifyAndNavigateOpp = creditingOpp.List_of_Product_Families__c != null && creditingOpp.List_of_Product_Families__c.contains('Edify') && creditingOpp.List_of_Product_Families__c.contains('Navigate') ? true : false;
+System.debug('bothEdifyAndNavigateOpp = ' + bothEdifyAndNavigateOpp);
 
 Set<String> setOfProgramsAcronyms = new Set<String>();  
 Set<String> setOfProductCode = new Set<String>();  
@@ -109,10 +122,12 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
 
         }  
 
-    }  
+    }
+
     if(qle.SBQQ__Product__r.Family != 'Fee' && qle.SBQQ__Product__r.Family != 'Pass Through Cost'){  
         setOfProductCode.add(qle.SBQQ__ProductCode__c);  
-    } 
+    }
+
     if(isRenewalOpp && qle.Previous_Year_Quantity__c == 0){ 
         isOppRenewalUpsell = true; 
     } 
@@ -128,12 +143,19 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
 
             }
 
-    } 
-        if(qle.SBQQ__ProductName__c == 'Implementation Fee'){ 
-            mapOfProgramAndImplementationFee.put( mapOfProgramAndParentProductName.get(qle.Related_Product__c) ,qle.SBQQ__CustomerTotal__c); 
-        } 
+    }
+    // System.debug('qle.SBQQ__ProductName__c = ' + qle.SBQQ__ProductName__c);
+    if(qle.SBQQ__ProductName__c == 'Implementation Fee'){
+        if(mapOfProgramAndImplementationFee.containsKey(mapOfProgramAndParentProductName.get(qle.Related_Product__c))){
+            Decimal sumOfFee = mapOfProgramAndImplementationFee.get(mapOfProgramAndParentProductName.get(qle.Related_Product__c)) + qle.SBQQ__CustomerTotal__c;
+            mapOfProgramAndImplementationFee.put(mapOfProgramAndParentProductName.get(qle.Related_Product__c) ,sumOfFee);
+        } else {
+            mapOfProgramAndImplementationFee.put( mapOfProgramAndParentProductName.get(qle.Related_Product__c) ,qle.SBQQ__CustomerTotal__c);
+        }
+    }
+    // System.debug('mapOfProgramAndImplementationFee = ' + mapOfProgramAndImplementationFee);
 
-    } 
+    }
 for(String program : setOfProgramsAcronyms){ 
 
 Integer totalDays = mapOfProgramStartDate.get(program).daysBetween(mapOfProgramEndDate.get(program)) + 1;  
@@ -194,48 +216,73 @@ if(!listOfQLsAssociatedToContracts.isEmpty() && listOfQLsAssociatedToContracts.s
 
 
 for(String program : setOfProgramsAcronyms){
-    System.debug('------------------------------------NBB Details: Program to Credit-------------------------------------------'); 
-    
-    if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
-        System.debug('------------------------------------New Sale-------------------------------------------');
-    }
-    else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){
-        System.debug('----------------------------------Upsell RBB------------------------------------------');
-    }
-    else{
-        identifiedAsRenewal = true;
-        System.debug('----------------------------------Renewal----------------------------------------------');
-    }
+    Boolean upsellRBB = false;
     if(mapOfProgramAndNBBAmount.get(program) > 0){
+        System.debug('\n\n\n');
+        System.debug('----------------------------------NBB Details: Program to Credit-------------------------------------------'); 
+        
+        if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
+            System.debug('----------------------------------New Sale-------------------------------------------');
+        }
+        else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){
+            System.debug('----------------------------------Upsell RBB------------------------------------------');
+            upsellRBB = true;
+            
+        }
+        else{
+            identifiedAsRenewal = true;
+            System.debug('----------------------------------Renewal----------------------------------------------');
+        }
+    
         // System.debug(' mapOf Program And Parent Product Name (For A&T and Imp) = ' + mapOfProgramAndParentProductName); 
-        System.debug('Program ==> ' + program);
+        if(bothEdifyAndNavigateOpp && setOfNavigateProgram.contains(program)){
+            System.debug('----------------------------------ALERT: Both Edify and Navigate Present on the Opp----------------------------------');
+            System.debug(' Comment by Alex: The Edify NBB will be credited to Matthew Ingram (the opportunity owner), but for the Navigate NBB, we should split the NBB credit evenly (50/50) between Matthew Ingram and Dustin Ott.');
+        }
+        System.debug(' Program ==> ' + program);
         System.debug(' Program Start Date = ' + mapOfProgramStartDate.get(program)); 
         System.debug(' Program End Date = ' + mapOfProgramEndDate.get(program)); 
         System.debug(' Total Program Cost =>' + mapOfProgramAndTotalCost.get(program));
         System.debug(' Admin and Travel Fee =>' + mapOfProgramAndAdminTravelFee.get(program));
         System.debug(' Implementation Fee =>' + mapOfProgramAndImplementationFee.get(program));
-        System.debug(' NBB Amount =>' + mapOfProgramAndNBBAmount.get(program).setScale(2)); 
-        Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
-        System.debug('Binder Date: '  + atlBinderDate);
-        System.debug('ATL Date: ' + atlBinderDate);
-        System.debug('Opp Owner: ' + creditingOpp.Owner.Name);
-        if(program == 'BHTF'){
-            System.debug('Transfer Portal --> Create Shadow credits if Opp Owner is not Transfer Portal PDE');
+        System.debug(' NBB Amount =>' + mapOfProgramAndNBBAmount.get(program).setScale(2));
+        if(bothEdifyAndNavigateOpp && setOfNavigateProgram.contains(program)){
+            System.debug(' NBB Amount Split => ' + mapOfProgramAndNBBAmount.get(program).setScale(2)/2);
         }
 
+        Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
+        System.debug(' Binder Date: '  + atlBinderDate);
+        System.debug(' ATL Date: ' + atlBinderDate);
+        System.debug(' Opp Owner: ' + creditingOpp.Owner.Name);
+        if(bothEdifyAndNavigateOpp && setOfNavigateProgram.contains(program)){
+            System.debug(' Credit to 2 people Matthew Ingram and Dustin Ott');
+        }
+
+        if(program == 'BHTF'){
+            System.debug(' Transfer Portal --> Create Shadow credits if Opp Owner is not Transfer Portal PDE');
+        }
+        
+        if(upsellRBB){
+            System.debug(' Deal Type: Upsell');
+        } else {
+            System.debug(' Deal Type: New Sale');
+        }
+        System.debug(' NBB Type: Base Fee');
     }
 }
+System.debug('\n\n\n');
 if(isDiscountProductUsed){
-    System.debug('---------------------------------------------ALERT - Discount Product Used - NBB amount may differ ------------------------------------------'); 
+    System.debug('----------------------------------ALERT - Discount Product Used - NBB amount may differ ------------------------------------------'); 
 }
 System.debug('---------------------------------------------------------------------------------------------'); 
 if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c != null){
-    System.debug('------------------------------------------------ALERT - Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c + ' ---------------------------------------------'); 
+    System.debug('----------------------------------ALERT - Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c + ' ---------------------------------------------'); 
 }
 if(creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c != null){
-    System.debug('------------------------------------------------ALERT - Secondary Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c + ' ---------------------------------------------'); 
+    System.debug('----------------------------------ALERT - Secondary Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c + ' ---------------------------------------------'); 
 }
 
 
 //BHTF Shadow credit identification
 //Discounting Product added in which program?
+//Fixed Contract
