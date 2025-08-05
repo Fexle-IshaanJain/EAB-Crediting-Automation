@@ -11,7 +11,7 @@ Date contractSignatureDate = Date.parse(signedDate);
 Boolean tipsContract = false;
 
 
-Opportunity creditingOpp = [SELECT ID, StageName, LOA_Contract__c, Contract_Signature_Date__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c, Owner.Name, List_of_Product_Families__c
+Opportunity creditingOpp = [SELECT ID, StageName, LOA_Contract__c, Contract_Signature_Date__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c, Owner.Name, List_of_Product_Families__c, SBQQ__PrimaryQuote__r.Opt_Out_Penalty_Amount__c
 FROM Opportunity
 WHERE ID = :OppId LIMIT 1]; 
  
@@ -83,6 +83,7 @@ String appilyAdvPDE;
 
 if(listOfAlrPDE.size()>0){
     alrPDE = listOfAlrPDE[0].Staff_member__r.Name;
+    System.debug('ALR PDE: ' + alrPDE);
 }
 
 if(listOfAppilyAdvPDE.size()>0){
@@ -91,7 +92,7 @@ if(listOfAppilyAdvPDE.size()>0){
 
 String shadowCreditUser;
 
-if(creditingOpp.List_of_Product_Families__c.contains('Appily Advance - ALR') && listOfAlrPDE.size()>0){
+if(creditingOpp.List_of_Product_Families__c.contains('Appily Advance - ALR') && listOfAlrPDE.size()>0 && !creditingOpp.List_of_Product_Families__c.contains('ALR,')){
     shadowCreditUser = alrPDE;
 }else if(listOfAppilyAdvPDE.size()>0){
     shadowCreditUser = appilyAdvPDE;
@@ -432,6 +433,7 @@ for(String program : setOfAppilyAdvanceProAccronyms){
 
     
     List<Decimal> tempList = mapGrpAndTotal.get(program).values();
+    List<Decimal> listOfYearlyTotals = mapGrpAndTotal.get(program).values();
 
     tempList.sort();
 
@@ -443,6 +445,10 @@ for(String program : setOfAppilyAdvanceProAccronyms){
 
     if(nbbAmount > tempList[tempList.size()-1] || tempList.size() == 1){
         nbbAmount = tempList[tempList.size()-1];
+    }
+
+    if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c != null && creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c.contains('With Stated Penalty Fee')){
+        nbbAmount += creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out_Penalty_Amount__c*0.25;
     }
 
     if(tipsContract){
@@ -554,7 +560,7 @@ for(String program : setOfAppilyAdvanceProAccronyms){
     if(shadowCreditUser != null){
         System.debug('------------------------------------ 1st Shadow Record Details ------------------------------------');
         System.debug(' Program => ' + program);
-        System.debug(' Credited User => '+ alrPDE);
+        System.debug(' Credited User => '+ shadowCreditUser);
         System.debug(' NBB Amount => ' + shadowNBB);
         System.debug(' NBB Type => '+ 'Shadow Credit');
         System.debug(' ATL Date => '+ dateATL);
