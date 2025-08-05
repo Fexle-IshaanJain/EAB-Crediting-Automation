@@ -11,7 +11,7 @@ Date contractSignatureDate = Date.parse(signedDate);
 Boolean tipsContract = false;
 
 
-Opportunity creditingOpp = [SELECT ID, StageName, LOA_Contract__c, Contract_Signature_Date__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c, Owner.Name, List_of_Product_Families__c, SBQQ__PrimaryQuote__r.Opt_Out_Penalty_Amount__c
+Opportunity creditingOpp = [SELECT ID, StageName, LOA_Contract__c, Contract_Signature_Date__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c, Owner.Name, List_of_Product_Families__c, SBQQ__PrimaryQuote__r.Opt_Out_Penalty_Amount__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c
 FROM Opportunity
 WHERE ID = :OppId LIMIT 1]; 
  
