@@ -225,3 +225,5 @@ for(String program : setOfProgramsAcronyms){
 
 
 //Fixed Contract
+//Handle ATL/Binder Date, whichever is later
+
