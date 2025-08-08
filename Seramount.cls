@@ -202,8 +202,8 @@ for(String program : setOfProgramsAcronyms){
         System.debug(' Program Name : ' + program);
         System.debug(' NBB Amount : ' + nbbAmount.setScale(2) );
         System.debug(' NBB Type : Un-Posted Risk');
-        System.debug(' Binder Date : Date of the Event');
-        System.debug(' ATL Date : Date of the Event');
+        System.debug(' Binder Date : End Date of the Month of the Event');
+        System.debug(' ATL Date : End Date of the Month of the Event');
         System.debug(' Get the date of the event from : ' + seramountEvents);
     } else{
         System.debug('-----------------------------------------------Program to Credit :'+program +' ----------------------------------------------');
@@ -226,4 +226,5 @@ for(String program : setOfProgramsAcronyms){
 
 //Fixed Contract
 //Handle ATL/Binder Date, whichever is later
+
 
