@@ -31,7 +31,7 @@ Map<String, String> mapOfProgramAndParentProductName = new Map<String, String>()
 Set<String> setOfRenewablePrograms_Virtual = new Set<String>{'YOUV - Virtual Tour'};
 Set<String> setOfOneTimePrograms_Virtual = new Set<String>{'YOUVSS - Studio Services'};
 
-Set<String> setOfOneTimeProducts_Virtual = new Set<String>{'VTR-EAB_Team_Shoot_VidPlus','VTR-EAB_Team_Shoot','FEE-EAB_BoxPACK','FEE-AZ_PhotoVideo_Onsite','VTR-FTE_Employ_Shoot','VTR-Contrctor_Shoot_Mini','FEE-Vrtl_Tr_sutp_Fee' ,'VTR-Contrctor_Shoot_Full','VTR-Contnt_Lcnsng_OnTm_F','VTR-Drone_Still','VTR-Drone_Vid','VTR-Drone_Vid_Still'};
+Set<String> setOfOneTimeProducts_Virtual = new Set<String>{ 'FEE-Implementation_Fee', 'VTR-EAB_Team_Shoot_VidPlus','VTR-EAB_Team_Shoot','FEE-EAB_BoxPACK','FEE-AZ_PhotoVideo_Onsite','VTR-FTE_Employ_Shoot','VTR-Contrctor_Shoot_Mini','FEE-Vrtl_Tr_sutp_Fee' ,'VTR-Contrctor_Shoot_Full','VTR-Contnt_Lcnsng_OnTm_F','VTR-Drone_Still','VTR-Drone_Vid','VTR-Drone_Vid_Still'};
 
 /*Map<String, String> mapOfVirtualOneTimeProducts = new Map<String, String>{
     'VTR-EAB_Team_Shoot_VidPlus' => 'YOUVSS - Studio Services',
@@ -107,9 +107,17 @@ if(listOfUgPDE.size()>0 && ryauMembership != null && ryauMembership.size() > 1)
 
 for(SBQQ__QuoteLine__c qle :listOfQLs){  
     String programAcronym = null;
-     
+
+    System.debug('qle.SBQQ__ProductName__c = ' + qle.SBQQ__ProductName__c);     
+    System.debug('qle.SBQQ__Product__r.Program__r.Program_Acronym__c = ' + qle.SBQQ__Product__r.Program__r.Program_Acronym__c);     
+    System.debug('qle.SBQQ__ProductCode__c = ' + qle.SBQQ__ProductCode__c);
+
+
     mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, qle.SBQQ__Product__r.Program__r.Program_Acronym__c); 
     programAcronym = setOfOneTimeProducts_Virtual.contains(qle.SBQQ__ProductCode__c) ? 'YOUVSS - Studio Services' :  (qle.SBQQ__Product__r.Program__r.Program_Acronym__c != null ? qle.SBQQ__Product__r.Program__r.Program_Acronym__c : mapOfProgramAndParentProductName.get(qle.Related_Product__c));
+    
+    System.debug('mapOfProgramAndParentProductName = ' + mapOfProgramAndParentProductName);
+    System.debug('programAcronym = ' + programAcronym);
 
     if(qle.SBQQ__ProductCode__c == 'DISC-EAB_Invstmnt'){
         isDiscountProductUsed = true;
@@ -134,10 +142,10 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
         mapOfProgramStartDate.put(programAcronym, startDate);  
         mapOfProgramEndDate.put(programAcronym, endDate);  
         //System.debug('mapOfProgramAndTotalCost.containsKey(programAcronym) = ' + mapOfProgramAndTotalCost.containsKey(programAcronym));
-        if(mapOfProgramAndTotalCost.containsKey(programAcronym) && qle.SBQQ__ProductName__c != 'Administrative & Travel Fee' && qle.SBQQ__ProductName__c != 'Implementation Fee') {                  
+        if(mapOfProgramAndTotalCost.containsKey(programAcronym) && qle.SBQQ__ProductName__c != 'Administrative & Travel Fee') {                  
             mapOfProgramAndTotalCost.put(programAcronym, mapOfProgramAndTotalCost.get(programAcronym) + qle.SBQQ__CustomerTotal__c);  
 
-        } else if (qle.SBQQ__ProductName__c != 'Administrative & Travel Fee' && qle.SBQQ__ProductName__c != 'Implementation Fee') {  
+        } else if (qle.SBQQ__ProductName__c != 'Administrative & Travel Fee') {  
             mapOfProgramAndTotalCost.put(programAcronym, qle.SBQQ__CustomerTotal__c);  
 
         }  
@@ -165,18 +173,21 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
 
     }
     // System.debug('qle.SBQQ__ProductName__c = ' + qle.SBQQ__ProductName__c);
-    if(qle.SBQQ__ProductName__c == 'Implementation Fee' )
-    {
+    // if(qle.SBQQ__ProductName__c == 'Implementation Fee' )
+    // {
+    //     System.debug('mapOfProgramAndImplementationFee = ' + mapOfProgramAndImplementationFee);
+    //     System.debug('mapOfProgramAndParentProductName = ' + mapOfProgramAndParentProductName);
+    //     System.debug('qle.Related_Product__c = ' + qle.Related_Product__c);
+    //     if(mapOfProgramAndImplementationFee.containsKey(mapOfProgramAndParentProductName.get(qle.Related_Product__c)))
+    //     {
+    //         Decimal sumOfFee = mapOfProgramAndImplementationFee.get(mapOfProgramAndParentProductName.get(qle.Related_Product__c)) + qle.SBQQ__CustomerTotal__c;
+    //         mapOfProgramAndImplementationFee.put(mapOfProgramAndParentProductName.get(qle.Related_Product__c) ,sumOfFee);
          
-        if(mapOfProgramAndImplementationFee.containsKey(mapOfProgramAndParentProductName.get(qle.Related_Product__c)))
-        {
-            Decimal sumOfFee = mapOfProgramAndImplementationFee.get(mapOfProgramAndParentProductName.get(qle.Related_Product__c)) + qle.SBQQ__CustomerTotal__c;
-            mapOfProgramAndImplementationFee.put(mapOfProgramAndParentProductName.get(qle.Related_Product__c) ,sumOfFee);
-         
-        } else {
-            mapOfProgramAndImplementationFee.put( mapOfProgramAndParentProductName.get(qle.Related_Product__c) ,qle.SBQQ__CustomerTotal__c);
-        }
-    }
+    //     } else {
+    //         mapOfProgramAndImplementationFee.put( mapOfProgramAndParentProductName.get(qle.Related_Product__c) ,qle.SBQQ__CustomerTotal__c);
+    //     }
+    //     System.debug('mapOfProgramAndImplementationFee = ' + mapOfProgramAndImplementationFee);
+    // }
 
     }
 for(String program : setOfProgramsAcronyms){ 
