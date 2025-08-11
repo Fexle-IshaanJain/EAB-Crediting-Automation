@@ -108,16 +108,16 @@ if(listOfUgPDE.size()>0 && ryauMembership != null && ryauMembership.size() > 1)
 for(SBQQ__QuoteLine__c qle :listOfQLs){  
     String programAcronym = null;
 
-    System.debug('qle.SBQQ__ProductName__c = ' + qle.SBQQ__ProductName__c);     
-    System.debug('qle.SBQQ__Product__r.Program__r.Program_Acronym__c = ' + qle.SBQQ__Product__r.Program__r.Program_Acronym__c);     
-    System.debug('qle.SBQQ__ProductCode__c = ' + qle.SBQQ__ProductCode__c);
+    //System.debug('qle.SBQQ__ProductName__c = ' + qle.SBQQ__ProductName__c);     
+   //System.debug('qle.SBQQ__Product__r.Program__r.Program_Acronym__c = ' + qle.SBQQ__Product__r.Program__r.Program_Acronym__c);     
+    //System.debug('qle.SBQQ__ProductCode__c = ' + qle.SBQQ__ProductCode__c);
 
 
     mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, qle.SBQQ__Product__r.Program__r.Program_Acronym__c); 
     programAcronym = setOfOneTimeProducts_Virtual.contains(qle.SBQQ__ProductCode__c) ? 'YOUVSS - Studio Services' :  (qle.SBQQ__Product__r.Program__r.Program_Acronym__c != null ? qle.SBQQ__Product__r.Program__r.Program_Acronym__c : mapOfProgramAndParentProductName.get(qle.Related_Product__c));
     
-    System.debug('mapOfProgramAndParentProductName = ' + mapOfProgramAndParentProductName);
-    System.debug('programAcronym = ' + programAcronym);
+    //System.debug('mapOfProgramAndParentProductName = ' + mapOfProgramAndParentProductName);
+    //System.debug('programAcronym = ' + programAcronym);
 
     if(qle.SBQQ__ProductCode__c == 'DISC-EAB_Invstmnt'){
         isDiscountProductUsed = true;
