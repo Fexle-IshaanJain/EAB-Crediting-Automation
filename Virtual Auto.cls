@@ -1,5 +1,5 @@
 //Virtual Tour
-ID OppId = '006Pr00000GoVnOIAV'; 
+ID OppId = '006Pr00000FYutZIAT';
 //String signedDate = '';
 //String oppCameInQueue = '';
 //Date consideredToday = Date.parse(oppCameInQueue);
@@ -234,7 +234,18 @@ if(!listOfQLsAssociatedToContracts.isEmpty() && listOfQLsAssociatedToContracts.s
 Integer counter = 0;
 for(String program : setOfProgramsAcronyms){
     Boolean upsellRBB = false;
-    
+
+        System.debug('setOfRenewalbleProgramsSoldInPast = ' + setOfRenewalbleProgramsSoldInPast);
+        System.debug('setOfRenewalbleProgramsSoldInPast.contains(program) = ' + setOfRenewalbleProgramsSoldInPast.contains(program));
+        System.debug('program = ' + program);
+        System.debug('isInitiatingOpp = ' + isInitiatingOpp);
+        System.debug('isThisARenewalForecasting = ' + isThisARenewalForecasting);
+        System.debug('isParentOppBlank = ' + isParentOppBlank);
+        System.debug('isParentOppContracted = ' + isParentOppContracted);
+        System.debug('contractExist = ' + contractExist);
+        System.debug('creditingOpp.SBQQ__AmendedContract__c = ' + creditingOpp.SBQQ__AmendedContract__c);
+        System.debug('creditingOpp.Is_this_an_amend_and_restate_contract__c = ' + creditingOpp.Is_this_an_amend_and_restate_contract__c);
+
     if(mapOfProgramAndNBBAmount.get(program) > 0 && (program == 'Youv' || program == 'YOUVSS - Studio Services')){
 
         if(counter == 0){
@@ -247,9 +258,10 @@ for(String program : setOfProgramsAcronyms){
         System.debug(' Cost of Program Without A&T : ' + mapOfProgramAndTotalCost);
         //   System.debug(' Admin And Travel Fee : ' + mapOfProgramAndAdminTravelFee);
         System.debug('===========================================================================================================================');
+        counter =+1;
         }
-        
-        if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
+
+        if( ( isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist ) || !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
             System.debug('=======================================================New Sale============================================================');
         }
         else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){
@@ -319,7 +331,7 @@ for(String program : setOfProgramsAcronyms){
         System.debug(' NBB Type: Base Fee');
         System.debug('-----------------------------------------------------------------------------------------------------------------------------');
     }
-    counter =+1;
+    
     
 }
 System.debug('\n\n\n');
