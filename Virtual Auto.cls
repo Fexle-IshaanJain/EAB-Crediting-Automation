@@ -1,5 +1,5 @@
 //Virtual Tour
-ID OppId = '006Pr00000HK6nRIAT';
+ID OppId = '006Pr00000FYutZIAT'; 
 //String signedDate = '';
 //String oppCameInQueue = '';
 //Date consideredToday = Date.parse(oppCameInQueue);
@@ -10,14 +10,14 @@ Opportunity creditingOpp = [SELECT ID, StageName, List_of_Product_Families__c,  
 FROM Opportunity
 WHERE ID = :OppId LIMIT 1];
 
-String sendToFinance = 'Contract Received - Send to Finance';
-String initiatingOpp = 'Initiating';
-String continuingOpp = 'Continuing';
-String amendmentOpp = 'Amendment';
-String renewalOpp = 'Renewal';
-String legacyAcquisitionOpp = 'Legacy Acquisition';
+String sendToFinance = 'Contract Received - Send to Finance';  
+String initiatingOpp = 'Initiating';  
+String continuingOpp = 'Continuing'; 
+String amendmentOpp = 'Amendment';  
+String renewalOpp = 'Renewal';  
+String legacyAcquisitionOpp = 'Legacy Acquisition'; 
 
-Boolean isOppRenewalUpsell = false;
+Boolean isOppRenewalUpsell = false;  
 Boolean identifiedAsRenewal = false;
 Set<String> setOfRenewalbleProgramsSoldInPast = new Set<String>();
 Map<String,Date> mapOfProgramStartDate = new Map<String,Date>();  
@@ -230,34 +230,38 @@ if(!listOfQLsAssociatedToContracts.isEmpty() && listOfQLsAssociatedToContracts.s
 }
 
 
-System.debug('setOfProgramsAcronyms = ' + setOfProgramsAcronyms);
+
 Integer counter = 0;
 for(String program : setOfProgramsAcronyms){
-
     Boolean upsellRBB = false;
-    System.debug('\n\n\n');
-
+    
     if(mapOfProgramAndNBBAmount.get(program) > 0 && (program == 'Youv' || program == 'YOUVSS - Studio Services')){
 
         if(counter == 0){
-            System.debug('\n');
-            System.debug('=====================================================DEAL INFORMATION======================================================');
-            System.debug(' Total Programs to credit : ' + setOfProgramsAcronyms.size());
-            System.debug(' Set Of Programs to credit : ' + setOfProgramsAcronyms);
-            System.debug(' Propsal Start Date : ' + mapOfProgramStartDate);
-            System.debug(' Propsal End Date : ' + mapOfProgramEndDate);
-            System.debug(' Cost of Program Without A&T : ' + mapOfProgramAndTotalCost);
-            //   System.debug(' Admin And Travel Fee : ' + mapOfProgramAndAdminTravelFee);
-            System.debug('===========================================================================================================================');
-            counter =+1;
+        System.debug('\n');
+        System.debug('=====================================================DEAL INFORMATION======================================================');
+        System.debug(' Total Programs to credit : ' + setOfProgramsAcronyms.size());
+        System.debug(' Set Of Programs to credit : ' + setOfProgramsAcronyms);
+        System.debug(' Propsal Start Date : ' + mapOfProgramStartDate);
+        System.debug(' Propsal End Date : ' + mapOfProgramEndDate);
+        System.debug(' Cost of Program Without A&T : ' + mapOfProgramAndTotalCost);
+        //   System.debug(' Admin And Travel Fee : ' + mapOfProgramAndAdminTravelFee);
+        System.debug('===========================================================================================================================');
         }
-
-        if( ( isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist ) || !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
+        System.debug(' setOfRenewalbleProgramsSoldInPast : ' + setOfRenewalbleProgramsSoldInPast);
+        System.debug(' isInitiatingOpp: ' + isInitiatingOpp);
+        System.debug('  isThisARenewalForecasting: ' + isThisARenewalForecasting );
+        System.debug(' isParentOppBlank : ' + isParentOppBlank);
+        System.debug(' isParentOppContracted :' + isParentOppContracted );
+        System.debug(' contractExist :' + contractExist );
+        System.debug(' creditingOpp.SBQQ__AmendedContract__c :' +creditingOpp.SBQQ__AmendedContract__c  );
+        if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
             System.debug('=======================================================New Sale============================================================');
         }
         else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){
             System.debug('================================================Upsell RBB=====================================================');
             upsellRBB = true;
+            
         }
         else{
             identifiedAsRenewal = true;
@@ -320,11 +324,8 @@ for(String program : setOfProgramsAcronyms){
         }
         System.debug(' NBB Type: Base Fee');
         System.debug('-----------------------------------------------------------------------------------------------------------------------------');
-    } else if(mapOfProgramAndNBBAmount.get(program) == 0){
-       System.debug('------------------------------------------------- $0 Dollor Program ----------------------------------------------------');
-        
     }
-    
+    counter =+1;
     
 }
 System.debug('\n\n\n');
