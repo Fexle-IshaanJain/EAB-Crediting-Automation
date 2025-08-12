@@ -1,5 +1,5 @@
 //Virtual Tour
-ID OppId = '006Pr00000HK6nRIAT';
+ID OppId = '006Pr00000Gdq7EIAR';
 //String signedDate = '';
 //String oppCameInQueue = '';
 //Date consideredToday = Date.parse(oppCameInQueue);
@@ -252,14 +252,14 @@ for(String program : setOfProgramsAcronyms){
             counter =+1;
         }
 
-        if( ( isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist ) || !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
+        if(  (!contractExist && isParentOppBlank && !isThisARenewalForecasting && creditingOpp.SBQQ__AmendedContract__c == null && creditingOpp.Is_this_an_amend_and_restate_contract__c == 'No')){
             System.debug('=======================================================New Sale============================================================');
-        }
-        else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){
+ 
+        } else if(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes' || isOppRenewalUpsell){
             System.debug('================================================Upsell RBB=====================================================');
             upsellRBB = true;
-        }
-        else{
+ 
+        } else{
             identifiedAsRenewal = true;
             System.debug('================================================Renewal========================================================');
         }
