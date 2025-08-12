@@ -1,3 +1,4 @@
+//Seramount
 ID OppId = '';
 Boolean tipsContract = false;
 Opportunity creditingOpp = [SELECT ID,Owner.Name, Commercial_Team__c, StageName, LOA_Contract__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Secondary_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c
@@ -61,19 +62,15 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
         isDiscountProductUsed = true;
     }
  	mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
-    System.debug('qle.SBQQ__ProductCode__c = ' + qle.SBQQ__ProductCode__c);
     programAcronym = qle.SBQQ__Product__r.Program__r.Program_Acronym__c != null ? qle.SBQQ__Product__r.Program__r.Program_Acronym__c : mapOfProgramAndParentProductName.get(qle.Related_Product__c);
-    System.debug('programAcronym = ' + programAcronym);
     for(String eventProduct : mapOfSeperateEvents.keySet()){
         //System.debug('eventProduct =  ' + eventProduct);
         //System.debug('qle.Product_Code_Combination__c =  ' + qle.Product_Code_Combination__c);
         //System.debug('qle.Related_Product_with_Parent_Product__c =  ' + qle.Related_Product_with_Parent_Product__c);
-        if(((qle.Product_Code_Combination__c != null &&  qle.Product_Code_Combination__c.contains(eventProduct)) || (qle.Related_Product_with_Parent_Product__c != null && qle.Related_Product_with_Parent_Product__c.contains(eventProduct)) ) && qle.SBQQ__ProductCode__c != 'SMT-100_Bst_Cmpns_Cmpt_Bmrk'){
-            System.debug('inside events loop if');
+        if((qle.Product_Code_Combination__c != null &&  qle.Product_Code_Combination__c.contains(eventProduct)) || (qle.Related_Product_with_Parent_Product__c != null && qle.Related_Product_with_Parent_Product__c.contains(eventProduct))){
             programAcronym = mapOfSeperateEvents.get(eventProduct);
         }
     }
-    System.debug('programAcronym = ' + programAcronym);
     if(programAcronym != null){
             setOfProgramsAcronyms.add(programAcronym);
             if(setOfRenewablePrograms_Seramount.contains(qle.SBQQ__Product__r.Program__r.Program_Acronym__c)){
@@ -158,7 +155,8 @@ for(String program : setOfProgramsAcronyms){
       Decimal adminAndTravelFee = mapOfProgramAndAdminTravelFee.containsKey(program) ? mapOfProgramAndAdminTravelFee.get(program) : 0;
       Decimal totalProgramCost = mapOfProgramAndTotalCost.get(program) + adminAndTravelFee;
 
-      if(counter == 0){
+    if(counter == 0){
+      counter = 1;
       System.debug('\n');
       System.debug('=====================================================DEAL INFORMATION======================================================');
       System.debug(' Total Programs to credit : ' + setOfProgramsAcronyms.size());
@@ -169,16 +167,7 @@ for(String program : setOfProgramsAcronyms){
       System.debug(' Admin And Travel Fee : ' + mapOfProgramAndAdminTravelFee);
       System.debug('===========================================================================================================================');
     }
-    if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || ( setOfOneTimePrograms_Seramount.contains(program) || (isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  && !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')) ) ){
-        System.debug('--------------------------------------------------------New Sale--------------------------------------------------------');     
-        
-    }
-    else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){
-        System.debug('----------------------------------Upsell RBB------------------------------------------');
-    }
-    else{
-        System.debug('----------------------------------Renewal----------------------------------------------');
-    }
+    
     Decimal nbbAmount = 0;
     if(setOfRenewablePrograms_Seramount.contains(program)){
         nbbAmount = ( (totalProgramCost/totalDays)*365 );
@@ -196,6 +185,16 @@ for(String program : setOfProgramsAcronyms){
     if(nbbAmount == 0){
         continue;
     }
+    if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || ( setOfOneTimePrograms_Seramount.contains(program) || (isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  && !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')) ) ){
+        System.debug('--------------------------------------------------------New Sale--------------------------------------------------------');     
+        
+    }
+    else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){
+        System.debug('----------------------------------Upsell RBB------------------------------------------');
+    }
+    else{
+        System.debug('----------------------------------Renewal----------------------------------------------');
+    }
 
     if(setOfOneTimePrograms_Seramount.contains(program)){
         System.debug('------------------------------------------Program to Credit :'+program +' -----------------------------------------');
@@ -203,8 +202,8 @@ for(String program : setOfProgramsAcronyms){
         System.debug(' Program Name : ' + program);
         System.debug(' NBB Amount : ' + nbbAmount.setScale(2) );
         System.debug(' NBB Type : Un-Posted Risk');
-        System.debug(' Binder Date : Date of the Event');
-        System.debug(' ATL Date : Date of the Event');
+        System.debug(' Binder Date : End Date of the Month of the Event');
+        System.debug(' ATL Date : End Date of the Month of the Event');
         System.debug(' Get the date of the event from : ' + seramountEvents);
     } else{
         System.debug('-----------------------------------------------Program to Credit :'+program +' ----------------------------------------------');
@@ -221,6 +220,10 @@ for(String program : setOfProgramsAcronyms){
     } else {
         System.debug(' Deal Type: New Sale');
     }
-    counter =+1; 
     System.debug('-----------------------------------------------------------------------------------------------------------------------');
 }
+
+
+//Fixed Contract
+//Handle ATL/Binder Date, whichever is later
+
