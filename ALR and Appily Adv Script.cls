@@ -133,10 +133,13 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
 
         }
 
-        if(programAcronym == null && qle.Calculated_Product_Family__c == 'ALR'){
+        if(programAcronym == null && qle.Calculated_Product_Family__c == 'ALR' && qle.SBQQ__ProductCode__c != cappexMembership){
             programAcronym = 'RYAG';
             // System.debug('Program: '+ programAcronym);
               
+        }else if(programAcronym == null && qle.Calculated_Product_Family__c == 'ALR' && qle.SBQQ__ProductCode__c == cappexMembership){
+            List<Product2> progName = [SELECT Program__r.Program_Acronym__c FROM Product2 WHERE Name =: qle.Related_Product__c LIMIT 1];
+            programAcronym = progName[0].Program__r.Program_Acronym__c;
         }
 
         if(qle.SBQQ__Product__r.Family == 'Fee' || qle.SBQQ__Product__r.Family == 'Pass Through Cost'){
@@ -145,6 +148,8 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
         }
 
         mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, programAcronym);
+
+        // System.debug('Product and Program: ' + mapOfProgramAndParentProductName);
 
         if(programAcronym != null){ 
 
