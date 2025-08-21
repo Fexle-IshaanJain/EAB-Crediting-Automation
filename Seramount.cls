@@ -18,7 +18,7 @@ Map<String,Decimal> mapOfProgramAndTotalCost = new Map<String,Decimal>();
 Map<String, Decimal> mapOfProgramAndNBBAmount = new Map<String, Decimal>();
 Map<String, Decimal> mapOfProgramAndAdminTravelFee = new Map<String, Decimal>();
 Map<String, String> mapOfProgramAndParentProductName = new Map<String, String>();
-Set<String> setOfRenewablePrograms_Seramount = new Set<String>{'EDBP','EDLC', 'EDATS', 'EDSPO','EDSLS', 'EDLRS', 'EDHR'};
+Set<String> setOfRenewablePrograms_Seramount = new Set<String>{'EDBP','EDLC', 'EDATS', 'EDSPO','EDSLS', 'EDLRS', 'EDHR', 'EDCPQ'};
 // Set<String> setOfOneTimePrograms_Seramount = new Set<String>{'EDEV','EDCON', 'EDLRN' };
 Set<String> setOfOneTimePrograms_Seramount = new Set<String>{'EDCON', 'EDLRN', 'EDRS', 'EDEV - EmERGe','EDEV - Global Emerge','EDEV - Lead with Ambition','EDEV - Work Beyond Summit and Gala Awards','EDEV - All Paid Events Ticket Package'};
 Set<String> setOfEvents_Seramount = new Set<String>{
@@ -149,24 +149,22 @@ if(oneTimeProgramPresentOf_Seramount){
     System.debug('One Time Program Present');
     System.debug('New Sale for One Time Program');
 }
-Integer counter = 0;
+
+System.debug('\n');
+System.debug('=====================================================DEAL INFORMATION======================================================');
+System.debug(' Total Programs to credit : ' + setOfProgramsAcronyms.size());
+System.debug(' Set Of Programs to credit : ' + setOfProgramsAcronyms);
+System.debug(' Propsal Start Date : ' + mapOfProgramStartDate);
+System.debug(' Propsal End Date : ' + mapOfProgramEndDate);
+System.debug(' Cost of Program Without A&T : ' + mapOfProgramAndTotalCost);
+System.debug(' Admin And Travel Fee : ' + mapOfProgramAndAdminTravelFee);
+System.debug('===========================================================================================================================');
+
+
 for(String program : setOfProgramsAcronyms){
       Integer totalDays = mapOfProgramStartDate.get(program).daysBetween(mapOfProgramEndDate.get(program)) + 1;
       Decimal adminAndTravelFee = mapOfProgramAndAdminTravelFee.containsKey(program) ? mapOfProgramAndAdminTravelFee.get(program) : 0;
       Decimal totalProgramCost = mapOfProgramAndTotalCost.get(program) + adminAndTravelFee;
-
-    if(counter == 0){
-      counter = 1;
-      System.debug('\n');
-      System.debug('=====================================================DEAL INFORMATION======================================================');
-      System.debug(' Total Programs to credit : ' + setOfProgramsAcronyms.size());
-      System.debug(' Set Of Programs to credit : ' + setOfProgramsAcronyms);
-      System.debug(' Propsal Start Date : ' + mapOfProgramStartDate);
-      System.debug(' Propsal End Date : ' + mapOfProgramEndDate);
-      System.debug(' Cost of Program Without A&T : ' + mapOfProgramAndTotalCost);
-      System.debug(' Admin And Travel Fee : ' + mapOfProgramAndAdminTravelFee);
-      System.debug('===========================================================================================================================');
-    }
     
     Decimal nbbAmount = 0;
     if(setOfRenewablePrograms_Seramount.contains(program)){
@@ -182,6 +180,9 @@ for(String program : setOfProgramsAcronyms){
         nbbAmount = nbbAmount * 0.99;
     }
     mapOfProgramAndNBBAmount.put(program, nbbAmount.setScale(2));
+
+    System.debug('program = ' + program);
+    System.debug('nbbAmount = ' + nbbAmount);
     if(nbbAmount == 0){
         continue;
     }
@@ -225,6 +226,4 @@ for(String program : setOfProgramsAcronyms){
 
 
 //Fixed Contract
-//Handle ATL/Binder Date, whichever is later
-
-
+//Calculation for only one year/one group proposal
