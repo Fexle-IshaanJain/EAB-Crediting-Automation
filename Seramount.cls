@@ -1,5 +1,5 @@
 //Seramount
-ID OppId = '';
+ID OppId = '006Pr00000IOIuHIAX';
 Boolean tipsContract = false;
 Opportunity creditingOpp = [SELECT ID,Owner.Name, Commercial_Team__c, StageName, LOA_Contract__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Secondary_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c
 FROM Opportunity
@@ -126,7 +126,7 @@ List<Contract> listOfContractOnAccount = [SELECT ID, ContractNumber FROM Contrac
 List<SBQQ__QuoteLine__c> listOfQLsAssociatedToContracts = [SELECT ID, SBQQ__Product__c, SBQQ__ProductCode__c, SBQQ__Product__r.Program__c, SBQQ__Product__r.Program__r.Program_Acronym__c, SBQQ__Product__r.Program__r.Name
 FROM SBQQ__QuoteLine__c
 WHERE SBQQ__Quote__r.SBQQ__Primary__c = true AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Ordered__c = true OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Contracted__c = true ) AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__c = :listOfContractOnAccount OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__AmendedContract__c = :listOfContractOnAccount)
-AND (SBQQ__ProductCode__c IN :setOfProductCode OR SBQQ__Product__r.Program__r.Program_Acronym__c IN :setOfProgramsAcronyms)];
+AND (SBQQ__ProductCode__c IN :setOfProductCode OR SBQQ__Product__r.Program__r.Program_Acronym__c IN :setOfProgramsAcronyms) AND SBQQ__ProductCode__c != 'SMT-Seramount'];
 contractExist = listOfQLsAssociatedToContracts.size() > 0;
 if(!listOfQLsAssociatedToContracts.isEmpty() && listOfQLsAssociatedToContracts.size() > 0){
     for(SBQQ__QuoteLine__c qle:listOfQLsAssociatedToContracts){
@@ -186,6 +186,20 @@ for(String program : setOfProgramsAcronyms){
     if(nbbAmount == 0){
         continue;
     }
+
+/*
+    System.debug('setOfRenewalbleProgramsSoldInPast = ' + setOfRenewalbleProgramsSoldInPast);
+    System.debug('setOfOneTimePrograms_Seramount = ' + setOfOneTimePrograms_Seramount);
+    System.debug('isInitiatingOpp = ' + isInitiatingOpp);
+    System.debug('isThisARenewalForecasting = ' + isThisARenewalForecasting);
+    System.debug('isParentOppBlank = ' + isParentOppBlank);
+    System.debug('isParentOppContracted = ' + isParentOppContracted);
+    System.debug('isThisARenewalForecasting = ' + isThisARenewalForecasting);
+    System.debug('contractExist = ' + contractExist);
+    System.debug('creditingOpp.SBQQ__AmendedContract__c = ' + creditingOpp.SBQQ__AmendedContract__c);
+    System.debug('creditingOpp.Is_this_an_amend_and_restate_contract__c = ' + creditingOpp.Is_this_an_amend_and_restate_contract__c);
+  */  
+
     if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || ( setOfOneTimePrograms_Seramount.contains(program) || (isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  && !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')) ) ){
         System.debug('--------------------------------------------------------New Sale--------------------------------------------------------');     
         
@@ -228,4 +242,3 @@ for(String program : setOfProgramsAcronyms){
 //Fixed Contract
 //Calculation for only one year/one group proposal
 ////Check Memberships also
-
