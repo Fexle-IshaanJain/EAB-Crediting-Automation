@@ -242,3 +242,5 @@ for(String program : setOfProgramsAcronyms){
 //Fixed Contract
 //Calculation for only one year/one group proposal
 ////Check Memberships also
+//Fix For Penalty Fee, eg. 006Pr00000LbCUNIA3
+
