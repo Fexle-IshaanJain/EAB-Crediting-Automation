@@ -137,16 +137,16 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
             programAcronym = 'RYAG';
             // System.debug('Program: '+ programAcronym);
               
-        }else if(programAcronym == null && qle.Calculated_Product_Family__c == 'ALR' && qle.SBQQ__ProductCode__c == cappexMembership){
+        }/*else if(programAcronym == null && qle.Calculated_Product_Family__c == 'ALR' && qle.SBQQ__ProductCode__c == cappexMembership){
             List<Product2> progName = [SELECT Program__r.Program_Acronym__c FROM Product2 WHERE Name =: qle.Related_Product__c LIMIT 1];
             programAcronym = progName[0].Program__r.Program_Acronym__c;
-        }
+        }*/
 
         if(qle.SBQQ__Product__r.Family == 'Fee' || qle.SBQQ__Product__r.Family == 'Pass Through Cost'){
             programAcronym = null;
             // System.debug('Program: '+ programAcronym);
         }
-
+        System.debug('Program: '+ programAcronym);
         mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, programAcronym);
 
         // System.debug('Product and Program: ' + mapOfProgramAndParentProductName);
@@ -294,30 +294,19 @@ AND (SBQQ__ProductCode__c IN :setOfProductCode OR SBQQ__Product__r.Program__r.Pr
 
 contractExist = listOfQLsAssociatedToContracts.size() > 0;  
 
+Set<String> setOfRenewalProg = new Set<String>();
+
 if(contractExist){
     for(SBQQ__QuoteLine__c qLine : listOfQLsAssociatedToContracts){
-        System.debug('Contract: '+ qLine.SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__r.ContractNumber);
+        System.debug('Esxisting Contract: '+ qLine.SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__r.ContractNumber);
+        if(qLine.SBQQ__Product__r.Program__r.Program_Acronym__c != null){
+            setOfRenewalProg.add(qLine.SBQQ__Product__r.Program__r.Program_Acronym__c);
+            
+        }    
     }
 }
 
-
-if( isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank || !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){ 
-
-    System.debug('====================================================== New Sale ======================================================'); 
-
-} 
-
-else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){  
-
-    System.debug('----------------------------------Upsell RBB------------------------------------------'); 
-
-} 
-
-else{ 
-    identifiedAsRenewal = true;
-    System.debug('----------------------------------Renewal----------------------------------------------'); 
-
-}
+System.debug('Programs getting renewed: '+ setOfRenewalProg);
 
 Date effectiveStartDate;
 
@@ -406,6 +395,8 @@ Decimal adamShadowNBB;
 
 Boolean fixedRateContract = false;
 
+Boolean penaltyFeeApplied = false;
+
 String qtr;
 
 String dealType;
@@ -447,6 +438,23 @@ if(setOfAppilyAdvanceProAccronyms.size() != setOfProgramsAcronyms.size()){
 
 for(String program : setOfProgramsAcronyms){
 
+    if(((setOfRenewalProg !=null && !setOfRenewalProg.contains(program)) || setOfRenewalProg == null) && isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank || !isParentOppContracted) ) || isThisARenewalForecasting) && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){ 
+
+    System.debug('====================================================== New Sale ======================================================'); 
+    } 
+
+    else if(creditingOpp.SBQQ__AmendedContract__c != null  || creditingOpp.Is_this_an_amend_and_restate_contract__c  == 'Yes' || isOppRenewalUpsell){  
+
+        System.debug('----------------------------------Upsell RBB------------------------------------------'); 
+
+    } 
+
+    else{ 
+        identifiedAsRenewal = true;
+        System.debug('----------------------------------Renewal----------------------------------------------'); 
+
+    }
+
     Decimal totalProgramCost = mapOfProgramAndTotalCost.get(program);
 
     Decimal nbbAmount;
@@ -478,6 +486,7 @@ for(String program : setOfProgramsAcronyms){
     }
 
     if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c != null && creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c.contains('With Stated Penalty Fee')){
+        penaltyFeeApplied = true;
         nbbAmount += creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out_Penalty_Amount__c*0.25;
     }
 
@@ -541,7 +550,11 @@ for(String program : setOfProgramsAcronyms){
     System.debug(' Highest Year total: ' + tempList[tempList.size()-1]);
     System.debug(' Total Program Cost: '+totalProgramCost);
     System.debug(' Secured Year Value: ' + securedYearValue);
-    System.debug(' Total NBB: '+ nbbAmount.setScale(2));
+    if(penaltyFeeApplied == true){
+    System.debug(' Total NBB: '+ nbbAmount.setScale(2) + '(25% of penalty fee is applied)');    
+    }else{
+        System.debug(' Total NBB: '+ nbbAmount.setScale(2));
+    }
     System.debug(' Base Fee Amount: ' + baseFeeAmount);
     System.debug(' Future Revenue Amount: ' + futureRevenue);
     System.debug(' Future Year Rec. NBB Amount: ' + futureYearRecNBB);
