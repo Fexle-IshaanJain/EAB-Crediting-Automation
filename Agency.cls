@@ -1,11 +1,12 @@
-ID OppId = '006Pr00000Jl5HRIAZ';
-String signedDate = '2/27/2025';
-String oppCameInQueue = '3/3/2025';
-Date consideredToday = Date.parse(oppCameInQueue);
-Date contractSignatureDate = Date.parse(signedDate);
+ID OppId = '';
+String signedDate = '';
+String oppCameInQueue = '';
 Boolean tipsContract = false;
 
-Opportunity creditingOpp = [SELECT ID,Owner.Name, Owner.Division, OwnerId, Account.Cappex_Partner_Success_Manager__c, List_of_Product_Families__c, Commercial_Team__c, StageName, LOA_Contract__c, SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Secondary_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c
+Date consideredToday = Date.parse(oppCameInQueue);
+Date contractSignatureDate = Date.parse(signedDate);
+
+Opportunity creditingOpp = [SELECT ID, StageName, List_of_Product_Families__c,  Owner.Name, LOA_Contract__c, LOA_Contract__r.StartDate, LOA_Contract__r.EndDate,  SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c
 FROM Opportunity
 WHERE ID = :OppId LIMIT 1];
 
@@ -209,7 +210,19 @@ List<SBQQ__QuoteLine__c> listOfQLsAssociatedToContracts = [SELECT ID, SBQQ__Prod
 FROM SBQQ__QuoteLine__c
 WHERE SBQQ__Quote__r.SBQQ__Primary__c = true AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Ordered__c = true OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Contracted__c = true ) AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__c = :listOfContractOnAccount OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__AmendedContract__c = :listOfContractOnAccount)   
 AND (SBQQ__ProductCode__c IN :setOfProductCode OR SBQQ__Product__r.Program__r.Program_Acronym__c IN :setOfProgramsAcronyms)];  
-contractExist = listOfQLsAssociatedToContracts.size() > 0;  
+contractExist = listOfQLsAssociatedToContracts.size() > 0; 
+//System.debug(contractExist);
+
+Date endDateOfContractToConsider = Date.today() < creditingOpp.SBQQ__PrimaryQuote__r.SBQQ__StartDate__c ? Date.today().addYears(-1) : creditingOpp.SBQQ__PrimaryQuote__r.SBQQ__StartDate__c.addYears(-1);
+List<Membership__c> AgencyMembership = [SELECT ID, Program__r.Name, Membership_Status__c, Last_End_Date_2__c FROM Membership__c WHERE Program__r.Partner_360_Terrain__c = 'Enrollment Services' AND Membership_Status__c = 'Member - Payer' AND Last_End_Date_2__c > :endDateOfContractToConsider AND Account_Name__c = :creditingOpp.AccountId AND Program__r.Program_Acronym__c = 'ESDA' ];
+//System.debug('AgencyMembership = ' + AgencyMembership);
+
+if (AgencyMembership.size() == 1){
+    
+    //System.debug('Agency Membership considered');
+    identifiedAsRenewal = true;
+    // System.debug('ryauMembership.Membership_Status__c = ' + ryauMembership.Membership_Status__c);
+}
 
 if(!listOfQLsAssociatedToContracts.isEmpty() && listOfQLsAssociatedToContracts.size() > 0){
     for(SBQQ__QuoteLine__c qle :listOfQLsAssociatedToContracts){
@@ -332,6 +345,12 @@ if(creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c != nul
 }
 
 Integer counter = 0;
+
+if(identifiedAsRenewal)
+{
+    System.debug('================================================Renewal========================================================');
+}
+
 for(String program : setOfProgramsAcronyms)
 {
   Boolean upsellRBB = false;
@@ -394,11 +413,6 @@ for(String program : setOfProgramsAcronyms)
     System.debug('================================================Upsell RBB=====================================================');
     upsellRBB = true;
             
-  }
-  else
-  {
-    identifiedAsRenewal = true;
-    System.debug('================================================Renewal========================================================');
   }
   System.debug('--------------------------------------------------Program to Credit :'+program +' -------------------------------------------------'); 
   System.debug(' Program :' + program);
