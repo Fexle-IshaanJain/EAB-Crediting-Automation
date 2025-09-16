@@ -18,7 +18,7 @@ Map<String,Decimal> mapOfProgramAndTotalCost = new Map<String,Decimal>();
 Map<String, Decimal> mapOfProgramAndNBBAmount = new Map<String, Decimal>();
 Map<String, Decimal> mapOfProgramAndAdminTravelFee = new Map<String, Decimal>();
 Map<String, String> mapOfProgramAndParentProductName = new Map<String, String>();
-Set<String> setOfRenewablePrograms_Seramount = new Set<String>{'EDBP','EDLC', 'EDATS', 'EDSPO','EDSLS', 'EDLRS', 'EDHR', 'EDCPQ'};
+Set<String> setOfRenewablePrograms_Seramount = new Set<String>{'EDBP','EDLC', 'EDATS', 'EDSPO','EDSLS', 'EDLRS', 'EDHR', 'EDCPQ','EDRH'};
 // Set<String> setOfOneTimePrograms_Seramount = new Set<String>{'EDEV','EDCON', 'EDLRN' };
 Set<String> setOfOneTimePrograms_Seramount = new Set<String>{'EDCON', 'EDLRN', 'EDRS', 'EDEV - EmERGe','EDEV - Global Emerge','EDEV - Lead with Ambition','EDEV - Work Beyond Summit and Gala Awards','EDEV - All Paid Events Ticket Package'};
 Set<String> setOfEvents_Seramount = new Set<String>{
@@ -243,4 +243,5 @@ for(String program : setOfProgramsAcronyms){
 //Calculation for only one year/one group proposal
 ////Check Memberships also
 //Fix For Penalty Fee, eg. 006Pr00000LbCUNIA3
+
 
