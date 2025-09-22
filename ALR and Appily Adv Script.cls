@@ -44,7 +44,6 @@ Map<String, Decimal> mapOfQuarterAndProration = new Map<String, Decimal>();
 
 Map<String, Decimal> mmapOfMembershipAndTotal = new Map<String, Decimal>();
 
-
 Boolean isOppSendToFinance = creditingOpp.StageName == 'Contract Received - Send to Finance';  
 
 Boolean isInitiatingOpp =  creditingOpp.Type2__c == 'Initiating';  
@@ -146,8 +145,8 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
             programAcronym = null;
             // System.debug('Program: '+ programAcronym);
         }
-        System.debug('Program: '+ programAcronym);
-        mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, programAcronym);
+        //System.debug('Program: '+ programAcronym);
+        mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, programAcronym); 
 
         // System.debug('Product and Program: ' + mapOfProgramAndParentProductName);
 
@@ -379,6 +378,8 @@ if(shadowCreditUser != null){
     totalShadowRecords = (setOfAppilyAdvanceProAccronyms.size())*2;
 }
 
+Integer totalDays;
+
 Decimal prorateMultiplier;
 
 Decimal securedYearValue;
@@ -459,16 +460,23 @@ for(String program : setOfProgramsAcronyms){
 
     Decimal nbbAmount;
 
+    totalDays = mapOfProgramStartDate.get(program).daysBetween(mapOfProgramEndDate.get(program)) + 1;
+
+    if(!containsALR){
+        nbbAmount = ( (totalProgramCost/totalDays)*365 );
+    }
+
     baseFeeAmount = 0;
     futureRevenue = 0;
     futureYearRecNBB = 0;
 
-    if(securedYearValue != 0){
-        nbbAmount = totalProgramCost/securedYearValue;
-    }else{
-        nbbAmount = totalProgramCost;
+    if(containsALR){
+        if(securedYearValue != 0){
+            nbbAmount = totalProgramCost/securedYearValue;
+        }else{
+            nbbAmount = totalProgramCost;
+        }
     }
-
     
     List<Decimal> tempList = mapGrpAndTotal.get(program).values();
     List<Decimal> listOfYearlyTotals = mapGrpAndTotal.get(program).values();
@@ -525,10 +533,6 @@ for(String program : setOfProgramsAcronyms){
     shadowNBB = (nbbAmount).setScale(2);
 
     adamShadowNBB = 0 - shadowNBB;
-
-    // if(!program.contains('CX')){
-    //     containsALR = true;
-    // }
 
     if(!containsALR){
         if(/*date.today()*/today.month() == mapOfProgramStartDate.get(program).month()){
