@@ -297,9 +297,11 @@ for(String program : setOfProgramsAcronyms){
         System.debug(' Opp Owner: ' + creditingOpp.Owner.Name);
         if(mapOfProgramAndBaseFee != null &&  mapOfProgramAndBaseFee.get(program) != null && mapOfProgramAndBaseFee.get(program) > 0){
             System.debug(' Base Fee: ' + mapOfProgramAndBaseFee.get(program));
+            System.debug(' NBB Type: Base Fee');
         }
         if(mapOfProgramAndFutureYearRecognizableNBB != null &&  mapOfProgramAndFutureYearRecognizableNBB.get(program) != null && mapOfProgramAndFutureYearRecognizableNBB.get(program) > 0){
             System.debug(' Future Year Recognizable NBB: ' + mapOfProgramAndFutureYearRecognizableNBB.get(program));
+            System.debug(' NBB Type: Future Year Recognizable NBB');
         }
         if(mapOfProgramAndFutureRevenue != null &&  mapOfProgramAndFutureRevenue.get(program) != null && mapOfProgramAndFutureRevenue.get(program) > 0){
             System.debug(' Future Revenue: ' + mapOfProgramAndFutureRevenue.get(program));
@@ -311,7 +313,7 @@ for(String program : setOfProgramsAcronyms){
         } else {
             System.debug(' Deal Type: New Sale');
         }
-        System.debug(' NBB Type: Base Fee');
+        
     }
 }
 System.debug('\n\n\n');
