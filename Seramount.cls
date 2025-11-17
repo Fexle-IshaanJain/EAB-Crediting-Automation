@@ -226,7 +226,7 @@ for(String program : setOfProgramsAcronyms){
         System.debug(' Program Name : ' + program);
         System.debug(' NBB Amount : ' + nbbAmount.setScale(2) );
         System.debug(' NBB Type : Base Fee');        
-        Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
+        Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() :  Date.newInstance(mapOfProgramStartDate.get(program).year(), mapOfProgramStartDate.get(program).month(), 1);
         System.debug(' Binder Date : '  + atlBinderDate);
         System.debug(' ATL Date : ' + atlBinderDate);
     }
@@ -243,5 +243,3 @@ for(String program : setOfProgramsAcronyms){
 //Calculation for only one year/one group proposal
 ////Check Memberships also
 //Fix For Penalty Fee, eg. 006Pr00000LbCUNIA3
-
-
