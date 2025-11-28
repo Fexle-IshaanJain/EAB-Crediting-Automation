@@ -243,3 +243,5 @@ for(String program : setOfProgramsAcronyms){
 //Calculation for only one year/one group proposal
 ////Check Memberships also
 //Fix For Penalty Fee, eg. 006Pr00000LbCUNIA3
+//Upsell NBB, eg. 006Pr00000E7tcRIAR
+
