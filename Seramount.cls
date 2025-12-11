@@ -244,4 +244,5 @@ for(String program : setOfProgramsAcronyms){
 ////Check Memberships also
 //Fix For Penalty Fee, eg. 006Pr00000LbCUNIA3
 //Upsell NBB, eg. 006Pr00000E7tcRIAR
+// Fix to show all 3 programs - 006Pr00000OjJALIA3
 
