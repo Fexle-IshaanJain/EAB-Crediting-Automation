@@ -1,7 +1,7 @@
 ID OppId = ''; 
 Boolean tipsContract = false;
 
-Opportunity creditingOpp = [SELECT ID, StageName, List_of_Product_Families__c,  Owner.Name, LOA_Contract__c, LOA_Contract__r.StartDate, LOA_Contract__r.EndDate,  SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c
+Opportunity creditingOpp = [SELECT ID, StageName, List_of_Product_Families__c,  Owner.Name, LOA_Contract__c, LOA_Contract__r.StartDate, LOA_Contract__r.EndDate,  SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c, Parent_Opportunity__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c, SBQQ__PrimaryQuote__r.Opt_Out_Penalty_Amount__c
 FROM Opportunity
 WHERE ID = :OppId LIMIT 1];
 
@@ -24,6 +24,7 @@ String legacyAcquisitionOpp = 'Legacy Acquisition';
 
 Boolean isOppRenewalUpsell = false;  
 Boolean identifiedAsRenewal = false;
+Boolean penaltyFeeApplied = false;
 Set<String> setOfRenewalbleProgramsSoldInPast = new Set<String>();
 Map<String,Date> mapOfProgramStartDate = new Map<String,Date>();  
 Map<String,Date> mapOfProgramEndDate = new Map<String,Date>();  
@@ -161,7 +162,12 @@ Integer totalDays = mapOfProgramStartDate.get(program).daysBetween(mapOfProgramE
 Decimal adminAndTravelFee = mapOfProgramAndAdminTravelFee.containsKey(program) ? mapOfProgramAndAdminTravelFee.get(program) : 0;  
 Decimal implementationFee = mapOfProgramAndImplementationFee.containsKey(program) ? mapOfProgramAndImplementationFee.get(program) : 0;  
 Decimal totalProgramCost = mapOfProgramAndTotalCost.get(program) + adminAndTravelFee; 
-Decimal nbbAmount = ( (totalProgramCost/totalDays)*365 ) + implementationFee;  
+Decimal nbbAmount = ( (totalProgramCost/totalDays)*365 ) + implementationFee; 
+
+if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c != null && creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c.contains('With Stated Penalty Fee')){
+    penaltyFeeApplied = true;
+    nbbAmount += creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out_Penalty_Amount__c*0.25;
+}
 
 if(tipsContract){
     nbbAmount = nbbAmount * 0.99;
@@ -247,7 +253,11 @@ for(String program : setOfProgramsAcronyms){
         System.debug('----------------------------------NBB Details:' + program + '-------------------------------------------'); 
         System.debug(' Credited User: ' + creditingOpp.Owner.Name);
         System.debug(' Program: ' + program);
-        System.debug(' NBB Amount: ' + mapOfProgramAndNBBAmount.get(program).setScale(2));
+        if(penaltyFeeApplied == true){
+            System.debug(' NBB Amount: ' + mapOfProgramAndNBBAmount.get(program).setScale(2)+ '(25% of penalty fee is applied)');  
+        }else{
+            System.debug(' NBB Amount: ' + mapOfProgramAndNBBAmount.get(program).setScale(2));
+        }
         System.debug(' NBB Type: Base Fee');
         
         if(bothEdifyAndNavigateOpp && setOfNavigateProgram.contains(program)){
