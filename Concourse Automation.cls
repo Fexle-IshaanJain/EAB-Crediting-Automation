@@ -316,7 +316,12 @@ for(String program : setOfProgramsAcronyms){
             System.debug(' Deal Type: New Sale');
         }
 
-        Date atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
+        Date atlBinderDate; /*= Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);*/
+        if(date.today().month() == mapOfProgramStartDate.get(program).month()){
+        atlBinderDate = date.today();
+        }else{
+            atlBinderDate = Date.newInstance(mapOfProgramStartDate.get(program).year(), mapOfProgramStartDate.get(program).month(), 1);
+        }
         System.debug(' Binder Date: '  + atlBinderDate);
         System.debug(' ATL Date: ' + atlBinderDate);
 
