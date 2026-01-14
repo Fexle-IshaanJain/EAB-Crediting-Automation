@@ -1,5 +1,5 @@
 //Research NBB + RBB
-ID OppId = '006Pr00000Bg9QLIAZ';
+ID OppId = '006Pr000008MulKIAS';
 Boolean tipsContract = false;
 Opportunity creditingOpp = [SELECT ID, StageName, List_of_Product_Families__c,  Owner.Name, LOA_Contract__c, LOA_Contract__r.StartDate, LOA_Contract__r.EndDate,  SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c,
     Parent_Opportunity__c, Parent_Opportunity__r.LOA_Contract__c, Parent_Opportunity__r.SBQQ__RenewedContract__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, SBQQ__PrimaryQuote__c, SBQQ__PrimaryQuote__r.SBQQ__StartDate__c, SBQQ__PrimaryQuote__r.SBQQ__EndDate__c, SBQQ__PrimaryQuote__r.Opt_Out__c, SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c, SBQQ__PrimaryQuote__r.Contract_Early_Termination_Date__c, SBQQ__PrimaryQuote__r.Penalty_Fee_Amount__c, SBQQ__PrimaryQuote__r.Opt_Out_Penalty_Amount__c
@@ -58,6 +58,12 @@ if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c == null || creditingOpp.SBQQ__P
 }
 for(SBQQ__QuoteLine__c qle :listOfQLs){
     String programAcronym = null;
+    System.debug('---------------------------------------------------------');
+    System.debug('qle.SBQQ__ProductCode__c = ' + qle.SBQQ__ProductCode__c);
+    System.debug('qle.SBQQ__ProductName__c = ' + qle.SBQQ__ProductName__c);
+    System.debug('qle.SBQQ__Product__r.Program__r.Program_Acronym__c = ' + qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
+    System.debug('qle.SBQQ__CustomerTotal__c = ' + qle.SBQQ__CustomerTotal__c);
+    System.debug('Program_Acronym__c = ' + qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
     mapOfProgramAndParentProductName.put(qle.SBQQ__ProductName__c, qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
     programAcronym = qle.SBQQ__Product__r.Program__r.Program_Acronym__c != null ? qle.SBQQ__Product__r.Program__r.Program_Acronym__c : mapOfProgramAndParentProductName.get(qle.Related_Product__c);
 	// programAcronym = mapOfEdifyPrograms.containsKey(programAcronym) ? mapOfEdifyPrograms.get(programAcronym) : programAcronym;
@@ -75,12 +81,12 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
         setOfProgramsAcronyms.add(programAcronym);
         Date startDate = qle.SBQQ__StartDate__c;
         Date endDate = qle.SBQQ__EndDate__c;
-        if(mapOfProgramStartDate != null && mapOfProgramStartDate.containsKey(programAcronym)){
+        if(mapOfProgramStartDate.containsKey(programAcronym)){
             if(startDate > mapOfProgramStartDate.get(programAcronym)){
                 startDate = mapOfProgramStartDate.get(programAcronym);
             }
         }
-        if(mapOfProgramEndDate != null && mapOfProgramEndDate.containsKey(programAcronym)){
+        if(mapOfProgramEndDate.containsKey(programAcronym)){
             if(endDate < mapOfProgramEndDate.get(programAcronym)){
                 endDate = mapOfProgramEndDate.get(programAcronym);
             }
@@ -93,13 +99,15 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
             mapOfGroupNumberAndStartDate.put(qle.Group_Number__c, qle.SBQQ__StartDate__c);
             mapOfGroupNumberAndEndDate.put(qle.Group_Number__c, qle.SBQQ__EndDate__c);
         }
+        System.debug('mapOfGroupNumberAndStartDate = ' + mapOfGroupNumberAndStartDate);
+        System.debug('mapOfGroupNumberAndEndDate = ' + mapOfGroupNumberAndEndDate);
         if(mapOfProgramAndTotalCost.containsKey(programAcronym) && qle.SBQQ__ProductName__c != 'Administrative & Travel Fee' && qle.SBQQ__ProductName__c != 'Implementation Fee') {
             mapOfProgramAndTotalCost.put(programAcronym, mapOfProgramAndTotalCost.get(programAcronym) + qle.SBQQ__CustomerTotal__c);
         } else if (qle.SBQQ__ProductName__c != 'Administrative & Travel Fee' && qle.SBQQ__ProductName__c != 'Implementation Fee'){
             mapOfProgramAndTotalCost.put(programAcronym, qle.SBQQ__CustomerTotal__c);
         }
         // Calculate total cost per program per group (excluding Admin & Travel Fee and Implementation Fee)
-        if(qle.Group_Number__c != null && qle.SBQQ__ProductName__c != 'Administrative & Travel Fee' && qle.SBQQ__ProductName__c != 'Implementation Fee'){
+        if(qle.Group_Number__c != null && qle.SBQQ__ProductName__c != 'Administrative & Travel Fee' && qle.SBQQ__ProductName__c != 'Implementation Fee' && qle.SBQQ__ProductCode__c != 'FEE-Administrtiv_Trvl_F'){
             String programGroupKey = programAcronym + '-' + String.valueOf(qle.Group_Number__c);
             if(mapOfProgramAndGroupTotalCost.containsKey(programGroupKey)){
                 mapOfProgramAndGroupTotalCost.put(programGroupKey, mapOfProgramAndGroupTotalCost.get(programGroupKey) + qle.SBQQ__CustomerTotal__c);
@@ -117,12 +125,18 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
     System.debug('mapOfProgramAndTotalCost = ' + mapOfProgramAndTotalCost);
 }
 for(SBQQ__QuoteLine__c qle :listOfQLs){
-    if(qle.SBQQ__ProductName__c == 'Administrative & Travel Fee'){
+    if(qle.SBQQ__ProductName__c == 'Administrative & Travel Fee' || qle.SBQQ__ProductCode__c == 'FEE-Administrtiv_Trvl_F'){
         if(mapOfProgramAndAdminTravelFee.containsKey(mapOfProgramAndParentProductName.get(qle.Related_Product__c))){
             Decimal sumOfFee = mapOfProgramAndAdminTravelFee.get(mapOfProgramAndParentProductName.get(qle.Related_Product__c)) + qle.SBQQ__CustomerTotal__c;
             mapOfProgramAndAdminTravelFee.put(mapOfProgramAndParentProductName.get(qle.Related_Product__c), sumOfFee);
         } else {
             mapOfProgramAndAdminTravelFee.put(mapOfProgramAndParentProductName.get(qle.Related_Product__c), qle.SBQQ__CustomerTotal__c);
+        }
+        String programGroupKey = mapOfProgramAndParentProductName.get(qle.Related_Product__c) + '-' + String.valueOf(qle.Group_Number__c);
+        if(mapOfProgramAndGroupTotalCost.containsKey(programGroupKey)){
+            mapOfProgramAndGroupTotalCost.put(programGroupKey, mapOfProgramAndGroupTotalCost.get(programGroupKey) + qle.SBQQ__CustomerTotal__c);
+        } else {
+            mapOfProgramAndGroupTotalCost.put(programGroupKey, qle.SBQQ__CustomerTotal__c);
         }
     }
     System.debug('qle.SBQQ__ProductName__c = ' + qle.SBQQ__ProductName__c);
@@ -133,13 +147,26 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
         } else {
             mapOfProgramAndImplementationFee.put(mapOfProgramAndParentProductName.get(qle.Related_Product__c), qle.SBQQ__CustomerTotal__c);
         }
+        String programGroupKey = mapOfProgramAndParentProductName.get(qle.Related_Product__c) + '-' + String.valueOf(qle.Group_Number__c);
+        if(mapOfProgramAndGroupTotalCost.containsKey(programGroupKey)){
+            mapOfProgramAndGroupTotalCost.put(programGroupKey, mapOfProgramAndGroupTotalCost.get(programGroupKey) + qle.SBQQ__CustomerTotal__c);
+        } else {
+            mapOfProgramAndGroupTotalCost.put(programGroupKey, qle.SBQQ__CustomerTotal__c);
+        }
     }
+    System.debug('mapOfProgramAndImplementationFee = ' + mapOfProgramAndImplementationFee);
 }
+System.debug('setOfProgramsAcronyms = '  + setOfProgramsAcronyms);
 for(String program : setOfProgramsAcronyms){
+    System.debug('program = '  + program);
+    System.debug('mapOfProgramStartDate = '  + mapOfProgramStartDate.get(program));
+    System.debug('mapOfProgramEndDate = '  + mapOfProgramEndDate.get(program));
+    System.debug('mapOfProgramAndAdminTravelFee = '  + mapOfProgramAndAdminTravelFee.get(program));
+    System.debug('mapOfProgramAndTotalCost = '  + mapOfProgramAndTotalCost.get(program));
     Integer totalDays = mapOfProgramStartDate.get(program).daysBetween(mapOfProgramEndDate.get(program)) + 1;
     Decimal adminAndTravelFee = mapOfProgramAndAdminTravelFee.containsKey(program) ? mapOfProgramAndAdminTravelFee.get(program) : 0;
     Decimal implementationFee = mapOfProgramAndImplementationFee.containsKey(program) ? mapOfProgramAndImplementationFee.get(program) : 0;
-    Decimal totalProgramCost = mapOfProgramAndTotalCost.get(program) + adminAndTravelFee;
+    Decimal totalProgramCost = (mapOfProgramAndTotalCost.get(program) != null ? mapOfProgramAndTotalCost.get(program) : 0) + (mapOfProgramAndAdminTravelFee.get(program) != null ? mapOfProgramAndAdminTravelFee.get(program) : 0);
     Decimal nbbAmount = ((totalProgramCost/totalDays)*365) + implementationFee;
     System.debug('nbbAmount = '  + nbbAmount);
     if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c != null && creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c.contains('With Stated Penalty Fee')){
@@ -304,8 +331,8 @@ List<SBQQ__QuoteLine__c> listOfQLsAssociatedToContracts = [SELECT ID, SBQQ__Prod
 FROM SBQQ__QuoteLine__c
 WHERE SBQQ__Quote__r.SBQQ__Primary__c = true AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Ordered__c = true OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Contracted__c = true ) AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__c = :listOfContractOnAccount OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__AmendedContract__c = :listOfContractOnAccount)
 AND (SBQQ__ProductCode__c IN :setOfProductCode OR SBQQ__Product__r.Program__r.Program_Acronym__c IN :setOfProgramsAcronyms)];
-contractExist = listOfQLsAssociatedToContracts.size() > 0;
-if(!listOfQLsAssociatedToContracts.isEmpty() && listOfQLsAssociatedToContracts.size() > 0){
+contractExist = !listOfQLsAssociatedToContracts.isEmpty();
+if(contractExist){
     for(SBQQ__QuoteLine__c qle :listOfQLsAssociatedToContracts){
         setOfRenewalbleProgramsSoldInPast.add(qle.SBQQ__Product__r.Program__r.Program_Acronym__c);
         if(qle.SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__r.EndDate < mapOfProgramStartDate.get(qle.SBQQ__Product__r.Program__r.Program_Acronym__c)){
@@ -322,12 +349,15 @@ if(!listOfQLsAssociatedToContracts.isEmpty() && listOfQLsAssociatedToContracts.s
 //Use cases to get NNLOA SP - Renewed Contract on Crediting Opp, Renewed Contract on Parent Opportunity, LOA Contract on Parent Opportunity, Latest contract ending
 if(creditingOpp.SBQQ__RenewedContract__c != null){
     renewedContractID = creditingOpp.SBQQ__RenewedContract__c;
-} else if(creditingOpp.Parent_Opportunity__r.SBQQ__RenewedContract__c != null){
+} else if(creditingOpp.Parent_Opportunity__c != null && creditingOpp.Parent_Opportunity__r.SBQQ__RenewedContract__c != null){
     renewedContractID = creditingOpp.Parent_Opportunity__r.SBQQ__RenewedContract__c;
-} else if(creditingOpp.Parent_Opportunity__r.LOA_Contract__c != null){
+} else if(creditingOpp.Parent_Opportunity__c != null && creditingOpp.Parent_Opportunity__r.LOA_Contract__c != null){
     renewedContractID = creditingOpp.Parent_Opportunity__r.LOA_Contract__c;
 }
-List<Subscription_Period__c> listOfNeedNewLoaSpsOfRenewedContract = [SELECT ID, Decision_Type__c FROM Subscription_Period__c Where Decision_Type__c = 'Need New LOA' AND (Contract__c = :renewedContractID OR Contract__c IN :mapOfProgramAndPreviousContractId.values())];
+List<Subscription_Period__c> listOfNeedNewLoaSpsOfRenewedContract = new List<Subscription_Period__c>();
+if(renewedContractID != null){
+    listOfNeedNewLoaSpsOfRenewedContract = [SELECT ID, Decision_Type__c FROM Subscription_Period__c Where Decision_Type__c = 'Need New LOA' AND (Contract__c = :renewedContractID OR Contract__c IN :mapOfProgramAndPreviousContractId.values())];
+}
 System.debug('renewedContractID = ' + renewedContractID);
 System.debug('mapOfProgramAndPreviousContractId = ' + mapOfProgramAndPreviousContractId);
 System.debug('listOfNeedNewLoaSpsOfRenewedContract = ' + listOfNeedNewLoaSpsOfRenewedContract);
@@ -336,8 +366,9 @@ if(!listOfNeedNewLoaSpsOfRenewedContract.isEmpty() && listOfNeedNewLoaSpsOfRenew
     needNewLoaSpFound = true;
     System.debug('Found 1 Need New LOA SP');
 } else if(listOfNeedNewLoaSpsOfRenewedContract.size() > 1){
-    for(Subscription_Period__c nnloaSp: listOfNeedNewLoaSpsOfRenewedContract){
-    }
+    //for(Subscription_Period__c nnloaSp: listOfNeedNewLoaSpsOfRenewedContract){
+        // Get the program specific nnloa sp
+    //}
 }
 Boolean listOfNeedNewLoaSpFound = false;
 if(!mapOfProgramAndPreviousContractId.isEmpty() && mapOfProgramAndPreviousContractId.size() > 1){
