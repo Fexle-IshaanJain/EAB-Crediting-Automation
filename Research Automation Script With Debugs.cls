@@ -356,7 +356,7 @@ if(creditingOpp.SBQQ__RenewedContract__c != null){
 }
 List<Subscription_Period__c> listOfNeedNewLoaSpsOfRenewedContract = new List<Subscription_Period__c>();
 if(renewedContractID != null){
-    listOfNeedNewLoaSpsOfRenewedContract = [SELECT ID, Decision_Type__c FROM Subscription_Period__c Where Decision_Type__c = 'Need New LOA' AND (Contract__c = :renewedContractID OR Contract__c IN :mapOfProgramAndPreviousContractId.values())];
+    listOfNeedNewLoaSpsOfRenewedContract = [SELECT ID, Decision_Type__c, Research_Strategic_Leader__c, Research_Strategic_Leader__r.Name FROM Subscription_Period__c Where Decision_Type__c = 'Need New LOA' AND (Contract__c = :renewedContractID OR Contract__c IN :mapOfProgramAndPreviousContractId.values())];
 }
 System.debug('renewedContractID = ' + renewedContractID);
 System.debug('mapOfProgramAndPreviousContractId = ' + mapOfProgramAndPreviousContractId);
@@ -377,10 +377,12 @@ if(!mapOfProgramAndPreviousContractId.isEmpty() && mapOfProgramAndPreviousContra
 }
 for(String program : setOfProgramsAcronyms){
     Boolean upsellRBB = false;
+    Boolean newSaleNBB = false;
     if(mapOfProgramAndNBBAmount.get(program) > 0){
         System.debug('\n\n\n');
         if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
             System.debug('----------------------------------New Sale-------------------------------------------');
+            newSaleNBB = true;
         }
         else if(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes' || isOppRenewalUpsell){
             System.debug('----------------------------------Upsell RBB------------------------------------------');
@@ -446,7 +448,11 @@ for(String program : setOfProgramsAcronyms){
         }
         System.debug(' Binder Date: '  + binderDate);
         System.debug(' ATL Date: ' + atlDate);
-        System.debug(' Sales Segment: If Institute has another active Research Contract, then "CS", else "none"');
+        if(!identifiedAsRenewal){
+            System.debug(' Sales Segment: If Institute has another active Research Contract, then "CS", else "none"');
+        } else {
+            System.debug(' Research SL: ' + listOfNeedNewLoaSpsOfRenewedContract[0].Research_Strategic_Leader__r.Name);
+        }
     }
 }
 System.debug('\n\n\n');
