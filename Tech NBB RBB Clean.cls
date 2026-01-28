@@ -1,5 +1,5 @@
 //Technology NBB + RBB
-ID OppId = '006Pr00000ME5SzIAL';
+ID OppId = '006Pr00000Bg9QLIAZ';
 Boolean tipsContract = false;
 Opportunity creditingOpp = [SELECT ID, StageName, List_of_Product_Families__c, Contract_Signature_Date__c,  Owner.Name, LOA_Contract__c, LOA_Contract__r.StartDate, LOA_Contract__r.EndDate,  SBQQ__RenewedContract__c, SBQQ__AmendedContract__c, Is_this_an_amend_and_restate_contract__c, Type2__c, IsFcstRenewal__c,
     Parent_Opportunity__c, Parent_Opportunity__r.LOA_Contract__c, Parent_Opportunity__r.SBQQ__RenewedContract__c, Parent_Opportunity__r.StageName, Parent_Opportunity__r.SBQQ__Contracted__c, Parent_Opportunity__r.SBQQ__Ordered__c, AccountId, Account.Name, 
@@ -79,9 +79,7 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
 	programAcronym = mapOfEdifyPrograms.containsKey(programAcronym) ? mapOfEdifyPrograms.get(programAcronym) : programAcronym;
     if(qle.SBQQ__ProductCode__c == 'DISC-EAB_Invstmnt'){
         isDiscountProductUsed = true;
-        if(qle.Related_Product_with_Parent_Product__c == 'NAV-Nav_4_Year'){
-            programAcronym = 'BHCO';
-        }
+        continue;
     }
     if(programAcronym != null){
         setOfProgramsAcronyms.add(programAcronym);
@@ -125,40 +123,45 @@ for(SBQQ__QuoteLine__c qle :listOfQLs){
         isOppRenewalUpsell = true;
     } 
 }
-for(SBQQ__QuoteLine__c qle :listOfQLs){ 
+for(SBQQ__QuoteLine__c qle :listOfQLs){
+    if(!(qle.SBQQ__ProductName__c == 'Administrative & Travel Fee' || qle.SBQQ__ProductCode__c == 'FEE-Administrtiv_Trvl_F' || qle.SBQQ__ProductName__c == 'Implementation Fee' || qle.SBQQ__ProductCode__c == 'DISC-EAB_Invstmnt')){
+        continue;
+    }
+    System.debug('mapOfProgramAndParentProductName = ' + mapOfProgramAndParentProductName);
+    String programAcronym = mapOfProgramAndParentProductName.get(qle.Related_Product__c);
+    String programGroupKey = programAcronym + '-' + String.valueOf(qle.Group_Number__c);
     if(qle.SBQQ__ProductName__c == 'Administrative & Travel Fee' || qle.SBQQ__ProductCode__c == 'FEE-Administrtiv_Trvl_F'){
-            if(mapOfProgramAndAdminTravelFee.containsKey(mapOfProgramAndParentProductName.get(qle.Related_Product__c))){
-            Decimal sumOfFee = mapOfProgramAndAdminTravelFee.get(mapOfProgramAndParentProductName.get(qle.Related_Product__c)) + qle.SBQQ__CustomerTotal__c;
-            mapOfProgramAndAdminTravelFee.put(mapOfProgramAndParentProductName.get(qle.Related_Product__c), sumOfFee);
+            if(mapOfProgramAndAdminTravelFee.containsKey(programAcronym)){
+            Decimal sumOfFee = mapOfProgramAndAdminTravelFee.get(programAcronym) + qle.SBQQ__CustomerTotal__c;
+            mapOfProgramAndAdminTravelFee.put(programAcronym, sumOfFee);
             } else {
-            mapOfProgramAndAdminTravelFee.put(mapOfProgramAndParentProductName.get(qle.Related_Product__c), qle.SBQQ__CustomerTotal__c);
-        }
-        String programGroupKey = mapOfProgramAndParentProductName.get(qle.Related_Product__c) + '-' + String.valueOf(qle.Group_Number__c);
-        if(mapOfProgramAndGroupTotalCost.containsKey(programGroupKey)){
-            mapOfProgramAndGroupTotalCost.put(programGroupKey, mapOfProgramAndGroupTotalCost.get(programGroupKey) + qle.SBQQ__CustomerTotal__c);
-        } else {
-            mapOfProgramAndGroupTotalCost.put(programGroupKey, qle.SBQQ__CustomerTotal__c);
+            mapOfProgramAndAdminTravelFee.put(programAcronym, qle.SBQQ__CustomerTotal__c);
         }
     }
     if(qle.SBQQ__ProductName__c == 'Implementation Fee'){
-        if(mapOfProgramAndImplementationFee.containsKey(mapOfProgramAndParentProductName.get(qle.Related_Product__c))){
-            Decimal sumOfFee = mapOfProgramAndImplementationFee.get(mapOfProgramAndParentProductName.get(qle.Related_Product__c)) + qle.SBQQ__CustomerTotal__c;
-            mapOfProgramAndImplementationFee.put(mapOfProgramAndParentProductName.get(qle.Related_Product__c), sumOfFee);
+        if(mapOfProgramAndImplementationFee.containsKey(programAcronym)){
+            Decimal sumOfFee = mapOfProgramAndImplementationFee.get(programAcronym) + qle.SBQQ__CustomerTotal__c;
+            mapOfProgramAndImplementationFee.put(programAcronym, sumOfFee);
         } else {
-            mapOfProgramAndImplementationFee.put(mapOfProgramAndParentProductName.get(qle.Related_Product__c), qle.SBQQ__CustomerTotal__c);
-        }
-        String programGroupKey = mapOfProgramAndParentProductName.get(qle.Related_Product__c) + '-' + String.valueOf(qle.Group_Number__c);
-        if(mapOfProgramAndGroupTotalCost.containsKey(programGroupKey)){
-            mapOfProgramAndGroupTotalCost.put(programGroupKey, mapOfProgramAndGroupTotalCost.get(programGroupKey) + qle.SBQQ__CustomerTotal__c);
-        } else {
-            mapOfProgramAndGroupTotalCost.put(programGroupKey, qle.SBQQ__CustomerTotal__c);
+            mapOfProgramAndImplementationFee.put(programAcronym, qle.SBQQ__CustomerTotal__c);
         }
     }
+    if(qle.SBQQ__ProductCode__c == 'DISC-EAB_Invstmnt'){
+        programAcronym = programAcronym == null ? 'ESDISC' : programAcronym;
+        programGroupKey = programAcronym + '-' + String.valueOf(qle.Group_Number__c);
+        if(mapOfProgramAndTotalCost.containsKey(programAcronym)) {
+            mapOfProgramAndTotalCost.put(programAcronym, mapOfProgramAndTotalCost.get(programAcronym) + qle.SBQQ__CustomerTotal__c);
+        } else {
+            mapOfProgramAndTotalCost.put(programAcronym, qle.SBQQ__CustomerTotal__c);
+        }
+    }
+    if(mapOfProgramAndGroupTotalCost.containsKey(programGroupKey)){
+        mapOfProgramAndGroupTotalCost.put(programGroupKey, mapOfProgramAndGroupTotalCost.get(programGroupKey) + qle.SBQQ__CustomerTotal__c);
+    } else {
+        mapOfProgramAndGroupTotalCost.put(programGroupKey, qle.SBQQ__CustomerTotal__c);
+    }
 }
-
 List<Contract> listOfActiveContractOnAccountStartedMoreThan12MonsAgo = [SELECT ID, ContractNumber FROM Contract WHERE AccountId = :creditingOpp.AccountId AND StartDate < :creditingOpp.SBQQ__PrimaryQuote__r.SBQQ__StartDate__c.addYears(-1)  AND ID != :creditingOpp.LOA_Contract__c];
-System.debug('listOfActiveContractOnAccountStartedMoreThan12MonsAgo = ' + listOfActiveContractOnAccountStartedMoreThan12MonsAgo);
-
 List<SBQQ__QuoteLine__c> listOfQLsAssociatedToContractsStartedWithin12Mons = [SELECT ID, SBQQ__Product__c, SBQQ__ProductCode__c, SBQQ__Product__r.Program__c, SBQQ__Product__r.Program__r.Program_Acronym__c, SBQQ__Product__r.Program__r.Name, SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__c, SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__r.EndDate
 FROM SBQQ__QuoteLine__c
 WHERE SBQQ__Quote__r.SBQQ__Primary__c = true AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Ordered__c = true OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Contracted__c = true ) AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__c = :listOfActiveContractOnAccountStartedMoreThan12MonsAgo OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__AmendedContract__c = :listOfActiveContractOnAccountStartedMoreThan12MonsAgo)   ];
@@ -297,7 +300,6 @@ Boolean isParentOppBlank = creditingOpp.Parent_Opportunity__c == null;
 Boolean isParentOppContracted = creditingOpp.Parent_Opportunity__c != null ? (creditingOpp.Parent_Opportunity__r.SBQQ__Ordered__c || creditingOpp.Parent_Opportunity__r.SBQQ__Contracted__c) : false;
 Boolean contractExist = false;
 List<Contract> listOfContractOnAccount = [SELECT ID FROM Contract WHERE AccountId = :creditingOpp.AccountId AND StartDate < :creditingOpp.SBQQ__PrimaryQuote__r.SBQQ__StartDate__c.addYears(-1) AND EndDate > :creditingOpp.SBQQ__PrimaryQuote__r.SBQQ__StartDate__c.addYears(-1) AND ID != :creditingOpp.LOA_Contract__c];
-
 List<SBQQ__QuoteLine__c> listOfQLsAssociatedToContracts = [SELECT ID, SBQQ__Product__c, SBQQ__ProductCode__c, SBQQ__Product__r.Program__c, SBQQ__Product__r.Program__r.Program_Acronym__c, SBQQ__Product__r.Program__r.Name, SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__c, SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__r.EndDate
 FROM SBQQ__QuoteLine__c
 WHERE SBQQ__Quote__r.SBQQ__Primary__c = true AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Ordered__c = true OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__Contracted__c = true ) AND (SBQQ__Quote__r.SBQQ__Opportunity2__r.LOA_Contract__c = :listOfContractOnAccount OR SBQQ__Quote__r.SBQQ__Opportunity2__r.SBQQ__AmendedContract__c = :listOfContractOnAccount)   
@@ -340,17 +342,14 @@ for(String program : setOfProgramsAcronyms){
     Boolean upsellRBB = false;
     Boolean renewalRBB = false;
     Boolean newSaleNBB = false;
-
     if(mapOfProgramAndNBBAmount.get(program) > 0){
         System.debug('\n\n\n');
-        
-        if( ( !setOfRenewalbleProgramsSoldInPast.isEmpty() && !setOfRenewalbleProgramsSoldInPast.contains(program) ) || isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
-            newSaleNBB = true;
-        // } else if( !setOfRenewalbleProgramsSoldInPast.contains(program) && ( (isEdify && setOfEdifyProgram.contains(program)) ||  (isNavigate && setOfAllNavigateProgram.contains(program)) || (isForage && setOfForageProgram.contains(program)) || (isETransferPortal && setOfTransferPortalProgram.contains(program)) || (isStarfish && setOfStarfishProgram.contains(program)) )   ){
-        } else if(  ( (isEdify && setOfEdifyProgram.contains(program)) ||  (isNavigate && setOfAllNavigateProgram.contains(program)) || (isForage && setOfForageProgram.contains(program)) || (isETransferPortal && setOfTransferPortalProgram.contains(program)) || (isStarfish && setOfStarfishProgram.contains(program)) )   ){
+        if( (setOfRenewalbleProgramsSoldInPast.isEmpty() || !setOfRenewalbleProgramsSoldInPast.contains(program)) &&  (    (isEdify && setOfEdifyProgram.contains(program)) ||  (isNavigate && setOfAllNavigateProgram.contains(program)) || (isForage && setOfForageProgram.contains(program)) || (isETransferPortal && setOfTransferPortalProgram.contains(program)) || (isStarfish && setOfStarfishProgram.contains(program)) )   ){
             upsellRBB = true;
         } else if(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes' || isOppRenewalUpsell){
             upsellRBB = true;
+        } else if( ( setOfRenewalbleProgramsSoldInPast.isEmpty() || !setOfRenewalbleProgramsSoldInPast.contains(program) ) || isInitiatingOpp && (( !isThisARenewalForecasting && (isParentOppBlank ||  !isParentOppContracted) ) || isThisARenewalForecasting)  &&  !contractExist && !(creditingOpp.SBQQ__AmendedContract__c != null || creditingOpp.Is_this_an_amend_and_restate_contract__c == 'Yes')  ){
+            newSaleNBB = true;
         }
         else{
             identifiedAsRenewal = true;
@@ -359,18 +358,23 @@ for(String program : setOfProgramsAcronyms){
         Date atlBinderDate;
         Date binderDate;
         Date atlDate;
-        if(identifiedAsRenewal){
-            Date programStartDate = mapOfProgramStartDate.get(program);
-            Date oneDayBefore = programStartDate.addDays(-1);
-            Date firstDayOfMonthBefore = Date.newInstance(oneDayBefore.year(), oneDayBefore.month(), 1);
-            binderDate = date.today();
-            atlDate = firstDayOfMonthBefore;
-        } else {
-            atlBinderDate = Date.today() > mapOfProgramStartDate.get(program) ? Date.today() : mapOfProgramStartDate.get(program);
+        Date programStartDate = mapOfProgramStartDate.get(program);
+        Boolean isFutureMonth = programStartDate.toStartOfMonth() > Date.today().toStartOfMonth();
+        Date oneDayBefore = programStartDate.addDays(-1);
+        Date firstDayOfMonthBefore = oneDayBefore.toStartOfMonth();
+        Date firstDayOfMonth = programStartDate.toStartOfMonth();
+        if(newSaleNBB){
+            atlBinderDate = isFutureMonth ? firstDayOfMonth : Date.today();
             binderDate = atlBinderDate;
             atlDate = atlBinderDate;
+        } else {
+            binderDate = Date.today();
+            if(needNewLoaSpFound){
+                atlDate = listOfNeedNewLoaSpsOfRenewedContract[0].Pool_Date__c;
+            } else {
+                atlDate = null;
+            }
         }
-
         System.debug('----------------------------------CREDITING DETAILS: Program to Credit-------------------------------------------');
         System.debug('================================================================================');
         System.debug(' Program ==> ' + program);
@@ -392,7 +396,13 @@ for(String program : setOfProgramsAcronyms){
         if(identifiedAsRenewal){
             System.debug(' NBB Amount: ' + mapOfProgramRBBCreditAmount.get(program));
         } else if(upsellRBB){
-            //Show only first year value
+            if(mapOfProgramAndImplementationFee.get(program) != null){
+                Decimal upsellRBBAmount = mapOfProgramAndFirstYearCreditAmount.get(program) - mapOfProgramAndImplementationFee.get(program);
+                System.debug(' NBB Amount for Program: ' + upsellRBBAmount);
+                System.debug(' NBB Amount for Implementation Fee: ' + mapOfProgramAndImplementationFee.get(program));
+            } else {
+                System.debug(' NBB Amount for Program: ' + mapOfProgramAndFirstYearCreditAmount.get(program));
+            }
         }
         else if(penaltyFeeApplied == true){
             System.debug(' NBB Amount: ' + mapOfProgramAndNBBAmount.get(program).setScale(2)+ '(25% of penalty fee is applied)');
@@ -445,18 +455,16 @@ for(String program : setOfProgramsAcronyms){
     }
 }
 System.debug('\n\n\n');
-
 if(isDiscountProductUsed){
-    System.debug('----------------------------------ALERT - Discount Product Used - NBB amount may differ ------------------------------------------');
+    System.debug('----------------------------------ALERT - Discount Product Used - NBB amount may differ');
 }
-System.debug('---------------------------------------------------------------------------------------------');
 if(creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c != null){
-    System.debug('----------------------------------ALERT - Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c + ' ---------------------------------------------');
+    System.debug('----------------------------------ALERT - Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Opt_Out__c);
 }
 if(creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c != null){
-    System.debug('----------------------------------ALERT - Secondary Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c + ' ---------------------------------------------');
+    System.debug('----------------------------------ALERT - Secondary Opt Out: ' + creditingOpp.SBQQ__PrimaryQuote__r.Secondary_Opt_Out_or_Opt_In_Type__c);
 }
 List<Contract> listOfStarfishContractOnAccount = [SELECT ID FROM Contract WHERE AccountId = :creditingOpp.AccountId AND List_of_Product_Families__c LIKE '%Starfish%'];
 if(!listOfStarfishContractOnAccount.isEmpty()){
-    System.debug('---------------------------------- ALERT - Starfish Sold in Past ---------------------------------------------');
+    System.debug('---------------------------------- ALERT - Starfish Sold in Past');
 }
